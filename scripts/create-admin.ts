@@ -1,0 +1,54 @@
+import { loadLocalEnv } from "./load-local-env";
+
+loadLocalEnv();
+
+async function main() {
+  const [{ prisma }, { hashPassword, isStrongSeedPassword }] = await Promise.all([
+    import("../src/lib/prisma"),
+    import("../src/lib/password"),
+  ]);
+  const email = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.INITIAL_ADMIN_PASSWORD ?? "";
+  const name = process.env.INITIAL_ADMIN_NAME?.trim() || "Store Admin";
+
+  if (!email || !password) {
+    throw new Error("Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD before running this command.");
+  }
+
+  if (!isStrongSeedPassword(password)) {
+    throw new Error(
+      "INITIAL_ADMIN_PASSWORD must be at least 12 characters and include uppercase, lowercase, number, and symbol characters.",
+    );
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await prisma.user.upsert({
+    where: {
+      email,
+    },
+    update: {
+      name,
+      passwordHash,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
+    create: {
+      email,
+      name,
+      passwordHash,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
+  });
+
+  console.log(`Admin user is ready: ${email}`);
+  await prisma.$disconnect();
+}
+
+main()
+  .then(() => undefined)
+  .catch(async (error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
