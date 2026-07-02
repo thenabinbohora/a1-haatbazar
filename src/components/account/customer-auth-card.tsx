@@ -242,7 +242,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
       <div className="mt-6 border-t border-border pt-5 text-center text-sm text-text-muted">
         {isForgotMode ? "Remembered your password?" : isRegisterMode ? "Already have an account?" : "New to A1 Haat Bazar?"}{" "}
         <button
-          className="cursor-pointer font-bold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+          className="cursor-pointer font-semibold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
           onClick={() => switchMode(isForgotMode || isRegisterMode ? "login" : "register")}
           type="button"
         >
