@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { customerLoginAction, customerRegisterAction } from "@/app/login/actions";
-import { AuthSubmitButton } from "@/components/account/auth-submit-button";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { PasswordInput } from "@/components/account/password-input";
+import { CustomerAuthCard, type LoginNotice } from "@/components/account/customer-auth-card";
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string; success?: string; mode?: string; next?: string }>;
 };
 
-function message(error?: string, success?: string) {
+function message(error?: string, success?: string): LoginNotice | null {
   if (success === "logout") return { tone: "success", text: "You have signed out." };
   if (error === "exists") return { tone: "error", text: "An account with that email already exists." };
   if (error === "validation") return { tone: "error", text: "Check the submitted details and try again." };
@@ -44,8 +43,8 @@ function ShieldIcon() {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const notice = message(params?.error, params?.success);
-  const next = params?.next?.startsWith("/") ? params.next : "/account";
-  const registerOpen = params?.mode === "register";
+  const next = params?.next?.startsWith("/") && !params.next.startsWith("//") && !params.next.startsWith("/admin") ? params.next : "/account";
+  const initialMode = params?.mode === "register" ? "register" : "login";
   const trustItems = ["Fresh stock updated regularly", "Local delivery and store pickup", "Cash on delivery or pay at pickup"];
 
   return (
@@ -97,119 +96,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </aside>
 
-        <div className="grid gap-5">
-          <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">Customer login</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-text">Sign in to your account</h2>
-            <p className="mt-2 text-sm leading-6 text-text-muted">
-              View orders, manage addresses, and save wishlist items.
-            </p>
-            {notice ? (
-              <div
-                className={[
-                  "mt-5 rounded-md border font-semibold",
-                  notice.tone === "error"
-                    ? "border-danger/30 bg-danger-soft p-3 text-sm text-danger"
-                    : "border-fresh/20 bg-fresh-soft/65 px-3 py-2 text-xs text-primary/80",
-                ].join(" ")}
-                role={notice.tone === "error" ? "alert" : "status"}
-              >
-                {notice.text}
-              </div>
-            ) : null}
-            <form action={customerLoginAction} className="mt-6 grid gap-4">
-              <input name="next" type="hidden" value={next} />
-              <label className="block" htmlFor="login-email">
-                <span className="text-sm font-bold text-text">Email</span>
-              </label>
-              <input
-                autoComplete="email"
-                className="-mt-2 min-h-12 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20"
-                id="login-email"
-                name="email"
-                required
-                type="email"
-              />
-              <label className="block" htmlFor="login-password">
-                <span className="text-sm font-bold text-text">Password</span>
-              </label>
-              <PasswordInput autoComplete="current-password" id="login-password" name="password" required />
-              <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <label className="flex w-fit cursor-pointer items-center gap-2 font-semibold text-text-muted">
-                  <input className="h-4 w-4 rounded border-border text-primary focus:ring-cta" name="remember" type="checkbox" />
-                  Remember me
-                </label>
-                <span className="font-medium text-text-muted">
-                  Forgot password? <span className="text-text-muted/80">Coming soon</span>
-                </span>
-              </div>
-              <AuthSubmitButton idleLabel="Sign in" pendingLabel="Signing in..." />
-              <div className="rounded-md border border-fresh/20 bg-fresh-soft/70 p-3 text-xs leading-5 text-text-muted">
-                <p className="font-black text-primary">Secure customer login</p>
-                <p>Your details are used only for orders and account features.</p>
-              </div>
-            </form>
-          </div>
-
-          <details
-            className="group rounded-lg border border-border bg-surface p-6 shadow-sm transition-shadow open:shadow-[0_16px_42px_rgba(17,17,17,0.06)] sm:p-7"
-            open={registerOpen}
-          >
-            <summary className="grid cursor-pointer list-none gap-4 marker:hidden sm:grid-cols-[1fr_auto] sm:items-center [&::-webkit-details-marker]:hidden">
-              <span>
-                <span className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">New customer</span>
-                <span className="mt-2 block text-2xl font-black tracking-tight text-text">New to A1 Haat Bazar?</span>
-                <span className="mt-2 block text-sm leading-6 text-text-muted">
-                  Create an account to save addresses, manage wishlist items, and checkout faster.
-                </span>
-              </span>
-              <span className="inline-flex min-h-11 w-fit items-center justify-center rounded-md border border-primary px-5 text-sm font-bold text-primary transition-colors group-open:border-border group-open:bg-fresh-soft group-open:text-primary hover:bg-fresh-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta">
-                Create account
-              </span>
-            </summary>
-            <form action={customerRegisterAction} className="mt-6 grid gap-4 border-t border-border pt-6">
-              <input name="next" type="hidden" value={next} />
-              <label className="block" htmlFor="register-name">
-                <span className="text-sm font-bold text-text">Full name</span>
-              </label>
-              <input
-                autoComplete="name"
-                className="-mt-2 min-h-12 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20"
-                id="register-name"
-                name="name"
-                required
-              />
-              <label className="block" htmlFor="register-email">
-                <span className="text-sm font-bold text-text">Email</span>
-              </label>
-              <input
-                autoComplete="email"
-                className="-mt-2 min-h-12 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20"
-                id="register-email"
-                name="email"
-                required
-                type="email"
-              />
-              <label className="block" htmlFor="register-phone">
-                <span className="text-sm font-bold text-text">Phone</span>
-              </label>
-              <input
-                autoComplete="tel"
-                className="-mt-2 min-h-12 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20"
-                id="register-phone"
-                name="phone"
-                type="tel"
-              />
-              <div>
-                <label className="block" htmlFor="register-password">
-                  <span className="text-sm font-bold text-text">Password</span>
-                </label>
-                <PasswordInput autoComplete="new-password" id="register-password" name="password" required />
-                <p className="mt-2 text-xs font-semibold text-text-muted">Use at least 8 characters.</p>
-              </div>
-              <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
-            </form>
-          </details>
+        <div>
+          <CustomerAuthCard
+            initialMode={initialMode}
+            loginAction={customerLoginAction}
+            next={next}
+            notice={notice}
+            registerAction={customerRegisterAction}
+          />
         </div>
       </section>
     </div>

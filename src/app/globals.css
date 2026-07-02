@@ -337,6 +337,10 @@ button.bg-cta:disabled {
   animation: a1-promise-icon-float 5.2s ease-in-out infinite;
 }
 
+.a1-auth-mode-panel {
+  animation: a1-auth-mode-enter 180ms ease-out both;
+}
+
 .polished-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #d8caa4 transparent;
@@ -419,6 +423,18 @@ button.bg-cta:disabled {
   }
 }
 
+@keyframes a1-auth-mode-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -435,7 +451,8 @@ button.bg-cta:disabled {
 
   .a1-reveal,
   .a1-float,
-  .a1-promise-icon-float {
+  .a1-promise-icon-float,
+  .a1-auth-mode-panel {
     animation: none;
   }
 }
