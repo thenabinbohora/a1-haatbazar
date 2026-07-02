@@ -36,6 +36,7 @@ function noticeClass(tone: LoginNotice["tone"]) {
 
 export function CustomerAuthCard({ initialMode, loginAction, next, notice, registerAction }: CustomerAuthCardProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [hiddenServerNoticeKey, setHiddenServerNoticeKey] = useState<string | null>(null);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotNotice, setForgotNotice] = useState<LoginNotice | null>(null);
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -45,7 +46,24 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
   const hasMountedRef = useRef(false);
   const isRegisterMode = mode === "register";
   const isForgotMode = mode === "forgot";
-  const displayNotice = forgotNotice ?? notice;
+  const serverNoticeKey = notice ? `${notice.tone}:${notice.text}` : null;
+  const serverNotice = notice?.tone === "success" && hiddenServerNoticeKey === serverNoticeKey ? null : notice;
+  const displayNotice = forgotNotice ?? serverNotice;
+
+  useEffect(() => {
+    if (notice?.tone !== "success") {
+      return;
+    }
+
+    const noticeKey = `${notice.tone}:${notice.text}`;
+    const timeoutId = window.setTimeout(() => {
+      setHiddenServerNoticeKey(noticeKey);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [notice]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
