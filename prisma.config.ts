@@ -36,15 +36,16 @@ loadLocalEnvFile(".env.local");
 loadLocalEnvFile(".env");
 
 const migrationUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const isGenerateCommand = process.argv.some((arg) => arg === "generate");
 
-if (!migrationUrl) {
+if (!migrationUrl && !isGenerateCommand) {
   throw new Error("DIRECT_URL or DATABASE_URL is required for Prisma CLI commands.");
 }
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: migrationUrl,
+    url: migrationUrl ?? "postgresql://user:password@localhost:5432/database",
   },
   migrations: {
     path: "prisma/migrations",
