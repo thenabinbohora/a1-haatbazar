@@ -50,8 +50,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="bg-[linear-gradient(135deg,#FAF8F1_0%,#FFFFFF_58%,#EEF7EF_100%)]">
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-        <aside className="relative overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(145deg,#174A27_0%,#12391F_58%,#0F2E1A_100%)] p-6 text-white shadow-[0_18px_45px_rgba(15,46,26,0.18)] sm:p-8 lg:sticky lg:top-28 lg:self-start">
+      <section className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8">
+        <aside className="relative overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(145deg,#174A27_0%,#12391F_58%,#0F2E1A_100%)] p-6 text-white shadow-[0_18px_45px_rgba(15,46,26,0.18)] sm:p-8 lg:sticky lg:top-28">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border border-cta/25 bg-cta/10" />
           <div className="pointer-events-none absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-white/5" />
           <div className="relative">
@@ -97,7 +97,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </aside>
 
-        <div className="grid gap-6">
+        <div className="grid gap-5">
           <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
             <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">Customer login</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-text">Sign in to your account</h2>
@@ -107,10 +107,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {notice ? (
               <div
                 className={[
-                  "mt-5 rounded-md border p-3 text-sm font-semibold",
+                  "mt-5 rounded-md border font-semibold",
                   notice.tone === "error"
-                    ? "border-danger/30 bg-danger-soft text-danger"
-                    : "border-fresh/25 bg-fresh-soft text-fresh",
+                    ? "border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                    : "border-fresh/20 bg-fresh-soft/65 px-3 py-2 text-xs text-primary/80",
                 ].join(" ")}
                 role={notice.tone === "error" ? "alert" : "status"}
               >
@@ -139,8 +139,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   <input className="h-4 w-4 rounded border-border text-primary focus:ring-cta" name="remember" type="checkbox" />
                   Remember me
                 </label>
-                <span className="font-semibold text-primary/80">
-                  Forgot password? <span className="text-text-muted">Coming soon</span>
+                <span className="font-medium text-text-muted">
+                  Forgot password? <span className="text-text-muted/80">Coming soon</span>
                 </span>
               </div>
               <AuthSubmitButton idleLabel="Sign in" pendingLabel="Signing in..." />

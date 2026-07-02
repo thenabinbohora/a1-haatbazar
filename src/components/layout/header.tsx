@@ -45,7 +45,12 @@ function navLinkClass(isActive: boolean) {
 export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const showNavbarSearch = pathname !== "/" && pathname !== "/search";
+  const showNavbarSearch = Boolean(
+    pathname?.startsWith("/products") ||
+      pathname?.startsWith("/category/") ||
+      pathname === "/offers" ||
+      pathname === "/fresh-vegetables",
+  );
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
