@@ -6,6 +6,7 @@ coverage
 .local
 .codex
 .agents
+.vercel
 tsconfig.tsbuildinfo
 
 .env
@@ -20,3 +21,5 @@ pnpm-debug.log*
 
 .DS_Store
 Thumbs.db
+
+.vercel

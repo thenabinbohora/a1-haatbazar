@@ -10,6 +10,7 @@ coverage
 .local
 .codex
 .agents
+.vercel
 tsconfig.tsbuildinfo
 
 *.log
