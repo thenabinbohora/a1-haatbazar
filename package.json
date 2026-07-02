@@ -15,7 +15,8 @@
     "demo:seed": "tsx scripts/refresh-real-catalog.ts",
     "catalog:refresh-real": "tsx scripts/refresh-real-catalog.ts",
     "admin:create": "tsx scripts/create-admin.ts",
-    "customer:create-test": "tsx scripts/create-test-customer.ts"
+    "customer:create-test": "tsx scripts/create-test-customer.ts",
+    "auth:sync-supabase-users": "tsx scripts/sync-supabase-auth-users.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -23,6 +24,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@supabase/supabase-js": "^2.110.0",
     "next": "^16.2.9",
     "pg": "^8.22.0",
     "react": "^19.2.7",

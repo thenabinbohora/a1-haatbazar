@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSession, destroySession } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { ensureSupabaseAuthUser } from "@/lib/supabase-auth-server";
 import { customerLoginSchema, customerRegisterSchema } from "@/lib/validation/customer";
 
 function safeNext(value?: string) {
@@ -53,7 +54,23 @@ export async function customerRegisterAction(formData: FormData) {
     redirect("/login?mode=register&error=validation");
   }
 
+  const existingUser = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+    select: { id: true },
+  });
+
+  if (existingUser) {
+    redirect("/login?mode=register&error=exists");
+  }
+
   try {
+    await ensureSupabaseAuthUser({
+      email: parsed.data.email,
+      name: parsed.data.name,
+      password: parsed.data.password,
+      phone: parsed.data.phone,
+    });
+
     const user = await prisma.user.create({
       data: {
         email: parsed.data.email,

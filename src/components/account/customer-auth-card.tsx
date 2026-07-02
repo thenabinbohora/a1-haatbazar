@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { AuthSubmitButton } from "@/components/account/auth-submit-button";
 import { PasswordInput } from "@/components/account/password-input";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-export type AuthMode = "login" | "register";
+export type AuthMode = "login" | "register" | "forgot";
 
 export type LoginNotice = {
   tone: "error" | "success";
@@ -34,10 +36,16 @@ function noticeClass(tone: LoginNotice["tone"]) {
 
 export function CustomerAuthCard({ initialMode, loginAction, next, notice, registerAction }: CustomerAuthCardProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotNotice, setForgotNotice] = useState<LoginNotice | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const loginEmailRef = useRef<HTMLInputElement | null>(null);
+  const forgotEmailRef = useRef<HTMLInputElement | null>(null);
   const registerNameRef = useRef<HTMLInputElement | null>(null);
   const hasMountedRef = useRef(false);
   const isRegisterMode = mode === "register";
+  const isForgotMode = mode === "forgot";
+  const displayNotice = forgotNotice ?? notice;
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -46,40 +54,102 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
     }
 
     window.requestAnimationFrame(() => {
-      if (isRegisterMode) {
+      if (mode === "register") {
         registerNameRef.current?.focus();
+      } else if (mode === "forgot") {
+        forgotEmailRef.current?.focus();
       } else {
         loginEmailRef.current?.focus();
       }
     });
-  }, [isRegisterMode]);
+  }, [mode]);
 
   const switchMode = (nextMode: AuthMode) => {
+    setForgotNotice(null);
     setMode(nextMode);
+  };
+
+  const handleForgotSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedEmail = forgotEmail.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setForgotNotice({ tone: "error", text: "Enter a valid email address." });
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      setForgotNotice({ tone: "error", text: "Password reset is not configured yet. Please contact the store team." });
+      return;
+    }
+
+    setIsSendingReset(true);
+    setForgotNotice(null);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
+
+    setIsSendingReset(false);
+
+    if (error) {
+      setForgotNotice({ tone: "error", text: "We could not send a reset link right now. Please try again shortly." });
+      return;
+    }
+
+    setForgotNotice({ tone: "success", text: "If an account exists for this email, a reset link has been sent." });
   };
 
   return (
     <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
       <div className="a1-auth-mode-panel" key={mode}>
         <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
-          {isRegisterMode ? "New customer" : "Customer login"}
+          {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
         <h2 className="mt-2 text-3xl font-black tracking-tight text-text">
-          {isRegisterMode ? "Create your account" : "Sign in to your account"}
+          {isForgotMode ? "Reset your password" : isRegisterMode ? "Create your account" : "Sign in to your account"}
         </h2>
         <p className="mt-2 text-sm leading-6 text-text-muted">
-          {isRegisterMode
-            ? "Save addresses, manage wishlist items, and checkout faster."
-            : "View orders, manage addresses, and save wishlist items."}
+          {isForgotMode
+            ? "Enter your account email and we'll send you a secure password reset link."
+            : isRegisterMode
+              ? "Save addresses, manage wishlist items, and checkout faster."
+              : "View orders, manage addresses, and save wishlist items."}
         </p>
 
-        {notice ? (
-          <div className={noticeClass(notice.tone)} role={notice.tone === "error" ? "alert" : "status"}>
-            {notice.text}
+        {displayNotice ? (
+          <div className={noticeClass(displayNotice.tone)} role={displayNotice.tone === "error" ? "alert" : "status"}>
+            {displayNotice.text}
           </div>
         ) : null}
 
-        {isRegisterMode ? (
+        {isForgotMode ? (
+          <form className="mt-6 grid gap-4" onSubmit={handleForgotSubmit}>
+            <label className="block" htmlFor="forgot-email">
+              <span className="text-sm font-bold text-text">Email</span>
+            </label>
+            <input
+              autoComplete="email"
+              className={inputClass()}
+              id="forgot-email"
+              name="email"
+              onChange={(event) => setForgotEmail(event.target.value)}
+              ref={forgotEmailRef}
+              required
+              type="email"
+              value={forgotEmail}
+            />
+            <button
+              className="min-h-12 cursor-pointer rounded-md bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-75"
+              disabled={isSendingReset}
+              type="submit"
+            >
+              {isSendingReset ? "Sending reset link..." : "Send reset link"}
+            </button>
+          </form>
+        ) : isRegisterMode ? (
           <form action={registerAction} className="mt-6 grid gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="register-name">
@@ -152,9 +222,13 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
                 <input className="h-4 w-4 rounded border-border text-primary focus:ring-cta" name="remember" type="checkbox" />
                 Remember me
               </label>
-              <span className="font-medium text-text-muted">
-                Forgot password? <span className="text-text-muted/80">Coming soon</span>
-              </span>
+              <button
+                className="w-fit cursor-pointer font-medium text-text-muted underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+                onClick={() => switchMode("forgot")}
+                type="button"
+              >
+                Forgot password?
+              </button>
             </div>
             <AuthSubmitButton idleLabel="Sign in" pendingLabel="Signing in..." />
             <div className="rounded-md border border-fresh/20 bg-fresh-soft/70 p-3 text-xs leading-5 text-text-muted">
@@ -166,13 +240,13 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
       </div>
 
       <div className="mt-6 border-t border-border pt-5 text-center text-sm text-text-muted">
-        {isRegisterMode ? "Already have an account?" : "New to A1 Haat Bazar?"}{" "}
+        {isForgotMode ? "Remembered your password?" : isRegisterMode ? "Already have an account?" : "New to A1 Haat Bazar?"}{" "}
         <button
           className="cursor-pointer font-bold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
-          onClick={() => switchMode(isRegisterMode ? "login" : "register")}
+          onClick={() => switchMode(isForgotMode || isRegisterMode ? "login" : "register")}
           type="button"
         >
-          {isRegisterMode ? "Sign in" : "Create account"}
+          {isForgotMode || isRegisterMode ? "Sign in" : "Create account"}
         </button>
       </div>
     </div>

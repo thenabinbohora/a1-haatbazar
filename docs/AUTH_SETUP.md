@@ -15,7 +15,6 @@ Stage 3 adds a server-side email/password login foundation for the admin area.
 ## What Is Not Implemented Yet
 
 - Customer account UI.
-- Password reset.
 - Email verification.
 - Rate limiting.
 - Product CRUD.
@@ -60,6 +59,18 @@ npm.cmd run customer:create-test
 
 This creates a `CUSTOMER` role account for confirming that non-admin users cannot enter `/admin`.
 
+## Customer Password Reset
+
+Customer password reset uses Supabase Auth for recovery emails and then updates the app's local Prisma password hash after the recovery session is verified.
+
+Supabase Auth redirect URLs must include:
+
+- Development: `http://localhost:3000/**`
+- Production: `https://grocery-store-pro.vercel.app/**`
+- Future custom domain: `https://yourdomain.com.au/**`
+
+Keep real Supabase keys in `.env.local` or deployment environment variables only. Do not expose the service role key to browser code.
+
 ## Local Browser Test
 
 Start the app with a real local development database URL:
@@ -77,4 +88,3 @@ Then test:
 - Customer credentials do not open `/admin`.
 - Logout returns to `/admin/login`.
 - `/api/admin/health` returns `401` without an admin session.
-

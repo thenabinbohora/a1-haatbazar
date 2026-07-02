@@ -9,11 +9,13 @@ type LoginPageProps = {
 
 function message(error?: string, success?: string): LoginNotice | null {
   if (success === "logout") return { tone: "success", text: "You have signed out." };
+  if (success === "password-updated") return { tone: "success", text: "Your password has been updated. Please sign in with your new password." };
   if (error === "exists") return { tone: "error", text: "An account with that email already exists." };
   if (error === "validation") return { tone: "error", text: "Check the submitted details and try again." };
   if (error === "forbidden") return { tone: "error", text: "This account cannot access that page." };
   if (error === "invalid") return { tone: "error", text: "Invalid email or password." };
   if (error === "failed") return { tone: "error", text: "The account could not be created." };
+  if (error === "reset_link_invalid") return { tone: "error", text: "This reset link is invalid or expired. Please request a new link." };
   return null;
 }
 
@@ -44,7 +46,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const notice = message(params?.error, params?.success);
   const next = params?.next?.startsWith("/") && !params.next.startsWith("//") && !params.next.startsWith("/admin") ? params.next : "/account";
-  const initialMode = params?.mode === "register" ? "register" : "login";
+  const initialMode = params?.mode === "register" ? "register" : params?.mode === "forgot" ? "forgot" : "login";
   const trustItems = ["Fresh stock updated regularly", "Local delivery and store pickup", "Cash on delivery or pay at pickup"];
 
   return (
