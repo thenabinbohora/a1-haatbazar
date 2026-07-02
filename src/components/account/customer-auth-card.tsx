@@ -27,7 +27,7 @@ function inputClass() {
 
 function noticeClass(tone: LoginNotice["tone"]) {
   return [
-    "mt-5 rounded-md border font-semibold",
+    "rounded-md border font-semibold",
     tone === "error"
       ? "border-danger/30 bg-danger-soft p-3 text-sm text-danger"
       : "border-fresh/20 bg-fresh-soft/65 px-3 py-2 text-xs text-primary/80",
@@ -121,8 +121,8 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
   };
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
-      <div className="a1-auth-mode-panel" key={mode}>
+    <div className="flex h-full flex-col rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
+      <div className="a1-auth-mode-panel flex flex-1 flex-col" key={mode}>
         <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
           {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
@@ -137,11 +137,13 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               : "View orders, manage addresses, and save wishlist items."}
         </p>
 
-        {displayNotice ? (
-          <div className={noticeClass(displayNotice.tone)} role={displayNotice.tone === "error" ? "alert" : "status"}>
-            {displayNotice.text}
-          </div>
-        ) : null}
+        <div className="mt-5 min-h-10" aria-live={displayNotice?.tone === "error" ? "assertive" : "polite"}>
+          {displayNotice ? (
+            <div className={noticeClass(displayNotice.tone)} role={displayNotice.tone === "error" ? "alert" : "status"}>
+              {displayNotice.text}
+            </div>
+          ) : null}
+        </div>
 
         {isForgotMode ? (
           <form className="mt-6 grid gap-4" onSubmit={handleForgotSubmit}>
@@ -211,10 +213,6 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               <p className="mt-2 text-xs font-semibold text-text-muted">Use at least 8 characters.</p>
             </div>
             <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
-            <div className="rounded-md border border-fresh/20 bg-fresh-soft/70 p-3 text-xs leading-5 text-text-muted">
-              <p className="font-black text-primary">Private account details</p>
-              <p>Your details are used only for orders and account features.</p>
-            </div>
           </form>
         ) : (
           <form action={loginAction} className="mt-6 grid gap-4">
@@ -249,10 +247,6 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               </button>
             </div>
             <AuthSubmitButton idleLabel="Sign in" pendingLabel="Signing in..." />
-            <div className="rounded-md border border-fresh/20 bg-fresh-soft/70 p-3 text-xs leading-5 text-text-muted">
-              <p className="font-black text-primary">Secure customer login</p>
-              <p>Your details are used only for orders and account features.</p>
-            </div>
           </form>
         )}
       </div>
