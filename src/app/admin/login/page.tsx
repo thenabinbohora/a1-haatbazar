@@ -16,6 +16,10 @@ function getErrorMessage(error?: string) {
     return "Invalid email or password.";
   }
 
+  if (error === "rate-limited") {
+    return "Too many attempts. Please wait a minute and try again.";
+  }
+
   return null;
 }
 

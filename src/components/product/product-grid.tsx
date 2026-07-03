@@ -27,12 +27,17 @@ export function ProductGrid({
     <div
       className={
         variant === "related"
-          ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          : "grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-5"
+          ? "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
+          : "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
       }
     >
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} variant={variant === "related" ? "compact" : "standard"} />
+      {products.map((product, index) => (
+        <ProductCard
+          imagePriority={variant === "standard" && index < 2}
+          key={product.id}
+          product={product}
+          variant={variant === "related" ? "compact" : "standard"}
+        />
       ))}
     </div>
   );
@@ -40,7 +45,7 @@ export function ProductGrid({
 
 export function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-5" aria-label="Loading products">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" aria-label="Loading products">
       {Array.from({ length: 8 }).map((_, index) => (
         <div className="rounded-lg border border-border bg-surface p-3 shadow-sm" key={index}>
           <div className="skeleton-shimmer aspect-square rounded-md" />

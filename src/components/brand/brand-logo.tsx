@@ -40,7 +40,7 @@ export function BrandLogo({ href = "/", variant = "light", compact = false, disp
             : "h-[30px] w-[166px] object-contain sm:h-9 sm:w-[200px] xl:h-10 xl:w-[222px]"
         }
         height={414}
-        priority={false}
+        loading="eager"
         sizes={
           variant === "dark"
             ? "(min-width: 640px) 244px, 220px"

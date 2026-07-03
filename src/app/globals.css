@@ -19,7 +19,8 @@
   --color-danger-soft: #fee2e2;
   --color-warning: #c6922e;
   --color-info: #0369a1;
-  --font-sans: "Inter", "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --font-sans: var(--font-inter), "Inter", "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", var(--font-inter), "Segoe UI", Arial, sans-serif;
 }
 
 :root {
@@ -45,6 +46,17 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 a {
@@ -131,6 +143,12 @@ textarea {
   transform: translateY(-1px);
   box-shadow: 0 16px 34px rgba(15, 46, 26, 0.28);
   filter: saturate(1.08);
+}
+
+.a1-primary-button:active:not(:disabled),
+.a1-secondary-button:active {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 6px 14px rgba(15, 46, 26, 0.18);
 }
 
 .a1-primary-button:disabled,
@@ -333,12 +351,49 @@ button.bg-cta:disabled {
   animation: a1-float 7s ease-in-out infinite;
 }
 
-.a1-promise-icon-float {
-  animation: a1-promise-icon-float 5.2s ease-in-out infinite;
-}
-
 .a1-auth-mode-panel {
   animation: a1-auth-mode-enter 180ms ease-out both;
+}
+
+.a1-menu-enter {
+  animation: a1-auth-mode-enter 200ms ease-out both;
+}
+
+.a1-drawer-backdrop {
+  animation: a1-fade-in 200ms ease-out both;
+}
+
+.a1-drawer-panel {
+  animation: a1-drawer-in 260ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
+}
+
+@keyframes a1-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes a1-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Scroll-driven section reveals: progressive enhancement, no JS. */
+@supports (animation-timeline: view()) {
+  .a1-section-reveal {
+    animation: a1-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 32%;
+  }
 }
 
 .polished-scrollbar {
@@ -412,17 +467,6 @@ button.bg-cta:disabled {
   }
 }
 
-@keyframes a1-promise-icon-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
 @keyframes a1-auth-mode-enter {
   from {
     opacity: 0;
@@ -451,8 +495,11 @@ button.bg-cta:disabled {
 
   .a1-reveal,
   .a1-float,
-  .a1-promise-icon-float,
-  .a1-auth-mode-panel {
+  .a1-auth-mode-panel,
+  .a1-menu-enter,
+  .a1-section-reveal,
+  .a1-drawer-backdrop,
+  .a1-drawer-panel {
     animation: none;
   }
 }

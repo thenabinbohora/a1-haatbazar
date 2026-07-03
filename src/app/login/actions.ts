@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSession, destroySession } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 import { ensureSupabaseAuthUser } from "@/lib/supabase-auth-server";
 import { customerLoginSchema, customerRegisterSchema } from "@/lib/validation/customer";
 
@@ -25,6 +26,12 @@ export async function customerLoginAction(formData: FormData) {
 
   if (!parsed.success) {
     redirect("/login?error=invalid");
+  }
+
+  const clientIp = await getClientIp();
+
+  if (isRateLimited("customer-login", `${clientIp}:${parsed.data.email}`)) {
+    redirect("/login?error=rate-limited");
   }
 
   const user = await prisma.user.findUnique({
@@ -52,6 +59,10 @@ export async function customerRegisterAction(formData: FormData) {
 
   if (!parsed.success) {
     redirect("/login?mode=register&error=validation");
+  }
+
+  if (isRateLimited("customer-register", await getClientIp())) {
+    redirect("/login?mode=register&error=rate-limited");
   }
 
   const existingUser = await prisma.user.findUnique({

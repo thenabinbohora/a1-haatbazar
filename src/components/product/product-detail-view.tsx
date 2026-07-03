@@ -9,6 +9,7 @@ import { ProductImagePlaceholder } from "@/components/brand/product-image-placeh
 import { formatCurrency } from "@/components/product/price";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useCart } from "@/store/cart-store";
+import { useCartDrawer } from "@/store/cart-drawer-store";
 
 type ProductDetailViewProps = {
   initialVariant?: string;
@@ -127,6 +128,7 @@ function DetailSection({
 
 export function ProductDetailView({ initialVariant, product }: ProductDetailViewProps) {
   const { addItem } = useCart();
+  const { open: openCartDrawer } = useCartDrawer();
   const firstSaleVariant =
     product.variants.find((variant) => variant.stock > 0 && isOfferVariant(product, variant)) ??
     product.variants.find((variant) => isOfferVariant(product, variant));
@@ -533,12 +535,13 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
               {canAddToCart ? "Add to cart" : "Out of stock"}
             </button>
             {hasAddedToCart ? (
-              <Link
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-5 text-center text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                href="/cart"
+              <button
+                className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface px-5 text-center text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                onClick={openCartDrawer}
+                type="button"
               >
                 View cart
-              </Link>
+              </button>
             ) : null}
           </div>
 
@@ -567,9 +570,13 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             <p className="text-lg font-black text-text">{formatCurrency(price, selectedVariant.currency)}</p>
           </div>
           {hasAddedToCart ? (
-            <Link className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-extrabold text-text" href="/cart">
+            <button
+              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+              onClick={openCartDrawer}
+              type="button"
+            >
               View cart
-            </Link>
+            </button>
           ) : null}
           <button
             className="a1-primary-button min-h-11 shrink-0 cursor-pointer px-5 text-sm disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"

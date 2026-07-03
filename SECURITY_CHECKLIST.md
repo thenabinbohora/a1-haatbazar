@@ -12,7 +12,12 @@ This checklist is the running security baseline for Grocery Store Pro. Items are
 - [x] Checked public pages rendered without missing image `alt` attributes.
 - [x] Checked public forms rendered with visible labels.
 - [x] Mobile responsive checks found and fixed public page horizontal overflow.
-- [ ] Production hardening still needs auth rate limiting, CSRF review, checkout abuse prevention, coupon redemption validation, and payment-provider verification before real launch.
+- [x] Auth rate limiting added: in-memory sliding window (5 attempts/minute per IP+email) on admin login, customer login, and registration server actions. A shared store (Redis/Upstash) is still needed for multi-instance deployments.
+- [x] Security response headers added in `next.config.ts`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Strict-Transport-Security`.
+- [x] Content-Security-Policy added in `next.config.ts`: default-deny with allowances for self, inline styles/scripts required by Next.js, Supabase Storage images, Supabase API connects, and the Google Maps embed frame. `'unsafe-eval'` and websockets are enabled in development only.
+- [x] Public wishlist-state endpoint (`/api/wishlist/ids`) returns only the signed-in user's product IDs; guests receive an empty list.
+- [x] Search suggestion endpoint (`/api/search/suggest`) reuses the public catalog query (ACTIVE products only), caps query length at 60 chars, and returns catalog-safe fields only.
+- [ ] Production hardening still needs CSRF review, checkout abuse prevention, coupon redemption validation, and payment-provider verification before real launch.
 
 ## Stage 12 Customer Account And Admin Content Status
 

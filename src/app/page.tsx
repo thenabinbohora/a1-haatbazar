@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
 import { WeeklyOffersCarousel } from "@/components/home/weekly-offers-carousel";
+import { SearchBox } from "@/components/search/search-box";
 import { ProductGrid } from "@/components/product/product-grid";
 import { STORE_CONFIG } from "@/config/store";
 import {
@@ -38,12 +39,12 @@ function CategoryCard({
           <ProductImagePlaceholder category="A1 Haat Bazar" name={category.name} />
         )}
       </div>
-      <div className="p-4">
-        <h3 className="text-base font-bold text-text">{category.name}</h3>
-        <p className="mt-1 line-clamp-2 text-sm leading-5 text-text-muted">
+      <div className="p-3 sm:p-4">
+        <h3 className="text-sm font-bold text-text sm:text-base">{category.name}</h3>
+        <p className="mt-1 hidden line-clamp-2 text-sm leading-5 text-text-muted sm:block">
           {category.description ?? "Authentic pantry staples, fresh essentials, and weekly grocery picks."}
         </p>
-        <p className="mt-3 text-sm font-bold text-primary">{category._count.products} products</p>
+        <p className="mt-1.5 text-xs font-bold text-primary sm:mt-3 sm:text-sm">{category._count.products} products</p>
       </div>
     </Link>
   );
@@ -216,27 +217,27 @@ function A1PromiseBar() {
   ] as const;
 
   return (
-      <section className="border-y border-border bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-8">
-          <div className="a1-no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 md:grid-cols-3 lg:grid-cols-5">
-            {promises.map((promise, index) => (
-              <div
-                className="group flex min-h-[6rem] min-w-[17.5rem] snap-start items-start gap-3 rounded-lg border border-primary/10 bg-white px-4 py-4 text-primary shadow-[0_10px_28px_rgba(15,46,26,0.055)] transition-[border-color,box-shadow,transform] duration-200 sm:min-w-0 lg:min-h-[6.25rem] lg:hover:-translate-y-0.5 lg:hover:border-cta/25 lg:hover:shadow-[0_14px_34px_rgba(15,46,26,0.095)]"
-                key={promise.label}
-              >
-              <span
-                className="a1-promise-icon-float flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/10 bg-primary text-white shadow-[0_6px_14px_rgba(15,46,26,0.14)] transition-colors duration-200 group-hover:bg-primary-muted"
-                style={{ animationDelay: `${index * 420}ms` }}
-              >
+    <section aria-label="Store promises" className="bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
+        <div className="a1-no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto overscroll-x-contain px-4 lg:mx-0 lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible lg:px-0">
+          {promises.map((promise, index) => (
+            <div
+              className="a1-reveal group flex shrink-0 snap-start items-center gap-2.5 rounded-full border border-primary/10 bg-white/80 py-2 pl-2 pr-4 lg:shrink lg:items-start lg:rounded-lg lg:border-transparent lg:bg-transparent lg:py-1.5 lg:pl-0 lg:pr-0"
+              key={promise.label}
+              style={{ animationDelay: `${120 + index * 90}ms` }}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-[0_5px_12px_rgba(15,46,26,0.16)] transition-[transform,background-color,box-shadow] duration-300 ease-out lg:mt-0.5 lg:group-hover:-translate-y-0.5 lg:group-hover:bg-primary-muted lg:group-hover:shadow-[0_8px_18px_rgba(15,46,26,0.22)]">
                 <PromiseIcon type={promise.icon} />
+              </span>
+              <span className="min-w-0">
+                <span className="block whitespace-nowrap text-sm font-extrabold leading-5 text-primary lg:whitespace-normal">
+                  {promise.label}
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold leading-5 text-primary">{promise.label}</span>
-                  <span className="mt-1 block line-clamp-2 text-xs font-semibold leading-5 text-text-muted">
-                    {promise.description}
-                  </span>
+                <span className="mt-0.5 hidden text-xs font-semibold leading-5 text-text-muted lg:block">
+                  {promise.description}
                 </span>
-              </div>
+              </span>
+            </div>
           ))}
         </div>
       </div>
@@ -281,7 +282,7 @@ function StoreLocationSection() {
           eyebrow="Store pickup location"
           title="Visit A1 Haat Bazar"
         />
-        <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+        <div className="a1-section-reveal grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
           <div className="rounded-lg border border-border bg-surface p-5 shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:p-6">
             <p className="text-sm font-bold uppercase text-fresh">Local Salisbury store</p>
             <h3 className="mt-2 text-2xl font-extrabold text-primary">{STORE_CONFIG.storeName}</h3>
@@ -314,13 +315,27 @@ function StoreLocationSection() {
           </div>
 
           <div className="min-h-[280px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:min-h-[320px] lg:min-h-[350px]">
-            <iframe
-              className="h-full min-h-[280px] w-full border-0 sm:min-h-[320px] lg:min-h-[350px]"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              src={STORE_CONFIG.mapEmbedUrl}
-              title="A1 Haat Bazar location map"
-            />
+            <div className="flex min-h-[280px] flex-col sm:min-h-[320px] lg:min-h-[350px]">
+              <iframe
+                className="min-h-[220px] flex-1 border-0 sm:min-h-[240px] lg:min-h-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={STORE_CONFIG.mapEmbedUrl}
+                title="A1 Haat Bazar location map"
+              />
+              <div className="border-t border-border bg-white/95 p-4">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Store location</p>
+                <address className="mt-1 text-sm not-italic leading-5 text-text-muted">{STORE_CONFIG.address}</address>
+                <a
+                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-cta/35 bg-cta-soft px-4 text-sm font-extrabold text-primary transition-colors hover:border-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                  href={STORE_CONFIG.directionsUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Open in Google Maps
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -349,8 +364,24 @@ function SectionHeading({
         {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">{description}</p> : null}
       </div>
       {href && action ? (
-        <Link className="text-sm font-bold text-cta-hover transition-colors hover:text-primary" href={href}>
+        <Link
+          className="group inline-flex items-center gap-1.5 text-sm font-bold text-cta-hover transition-colors hover:text-primary"
+          href={href}
+        >
           {action}
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
         </Link>
       ) : null}
     </div>
@@ -369,60 +400,116 @@ export default async function HomePage() {
 
   const stripBanner = banners.find((banner) => banner.placement === "HOME_STRIP");
   const activeWeeklyOffers = weeklyOffers.filter((product) => product.isWeeklyOffer && product.isOnSale);
+  const quickCategoryLinks = categories.slice(0, 4);
 
   return (
-    <div className="bg-background">
+    <div className="overflow-x-clip bg-background">
       <section className="border-b border-border bg-hero">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-14">
-          <div className="flex flex-col justify-center">
-            <p className="text-sm font-bold uppercase text-fresh">A1 Haat Bazar Authentic Groceries</p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-text sm:text-5xl">
-              Authentic Nepali groceries, fresh vegetables, and daily essentials all in one place.
+        <div className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-5 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-8 lg:py-14">
+          <div className="min-w-0 flex flex-col justify-center">
+            <p className="a1-reveal text-sm font-bold uppercase tracking-[0.14em] text-fresh">
+              A1 Haat Bazar Authentic Groceries
+            </p>
+            <h1 className="a1-reveal mt-2.5 max-w-4xl text-[1.86rem] font-extrabold leading-[1.12] text-text [animation-delay:80ms] sm:mt-4 sm:text-5xl sm:leading-tight">
+              Authentic Nepali groceries, fresh vegetables, and{" "}
+              <span className="relative min-[370px]:whitespace-nowrap">
+                daily essentials
+                <svg
+                  aria-hidden="true"
+                  className="absolute -bottom-1.5 left-0 h-2.5 w-full text-cta"
+                  fill="none"
+                  preserveAspectRatio="none"
+                  viewBox="0 0 120 10"
+                >
+                  <path d="M2 8c30-6 86-6 116-2" stroke="currentColor" strokeLinecap="round" strokeWidth="3.4" />
+                </svg>
+              </span>{" "}
+              all in one place.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-text-muted sm:text-lg">
+            <p className="a1-reveal mt-3 max-w-2xl text-sm leading-6 text-text-muted [animation-delay:160ms] sm:mt-5 sm:text-lg sm:leading-7">
               Shop rice, lentils, spices, pickles, snacks, frozen foods, fresh produce, and weekly offers from A1 Haat
               Bazar.
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link className="a1-primary-button px-6 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta" href="/products">
+            <div className="a1-reveal mt-4 max-w-2xl [animation-delay:240ms] sm:mt-7">
+              <SearchBox placeholder="Search rice, masala, tea" variant="hero" />
+              <p className="mt-2 text-xs font-semibold text-text-muted">
+                Popular: basmati rice, momo masala, wai wai, tea, ghee
+              </p>
+            </div>
+
+            {quickCategoryLinks.length ? (
+              <div className="a1-reveal mt-3 grid grid-cols-2 gap-2 [animation-delay:300ms] sm:hidden">
+                {quickCategoryLinks.map((category) => (
+                  <Link
+                    className="min-h-10 rounded-full border border-primary/15 bg-white/86 px-3 py-1.5 text-center text-xs font-extrabold text-primary shadow-sm"
+                    href={`/category/${category.slug}`}
+                    key={category.id}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="a1-reveal mt-4 grid grid-cols-1 gap-2 [animation-delay:360ms] min-[370px]:grid-cols-2 sm:mt-7 sm:flex sm:flex-row sm:gap-3">
+              <Link className="a1-primary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6" href="/products">
                 Shop groceries
               </Link>
               <Link
-                className="a1-secondary-button px-6 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                className="a1-secondary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6"
                 href="/products?sale=on"
               >
                 View weekly offers
               </Link>
             </div>
 
-            <form action="/search" className="mt-7 max-w-2xl" role="search">
-              <label className="mb-2 block text-sm font-bold text-text" htmlFor="home-search">
-                Search groceries
-              </label>
-              <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-2 shadow-sm sm:flex-row">
-                <input
-                  className="min-h-12 flex-1 rounded-md border border-transparent bg-background px-4 text-base text-text placeholder:text-text-muted focus:border-cta"
-                  id="home-search"
-                  name="q"
-                  placeholder="Search rice, masala, noodles, tea"
-                  type="search"
-                />
-                <button
-                  className="a1-primary-button cursor-pointer px-6 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                  type="submit"
-                >
-                  Search
-                </button>
+            <div className="a1-reveal relative mt-3 h-24 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_34px_rgba(15,46,26,0.12)] [animation-delay:420ms] sm:hidden">
+              <Image
+                alt="Fresh vegetables, spices, rice, tea, snacks, and pantry staples at A1 Haat Bazar"
+                className="h-full w-full object-cover object-[center_46%]"
+                fill
+                priority
+                sizes="100vw"
+                src="/brand/a1-pantry-hero.webp"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(0deg,rgba(15,46,26,0.76)_0%,rgba(15,46,26,0.46)_52%,rgba(15,46,26,0)_100%)]"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute bottom-0 left-0 h-full w-3/4 bg-[linear-gradient(90deg,rgba(15,46,26,0.42)_0%,rgba(15,46,26,0)_100%)]"
+              />
+              <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-cta-soft">Fresh stock today</p>
+                <p className="mt-1 max-w-56 text-sm font-bold leading-5">Pickup, local delivery, and weekly grocery offers.</p>
               </div>
-            </form>
+            </div>
           </div>
 
-          <HeroVisual />
+          <div className="hidden lg:block">
+            <HeroVisual />
+          </div>
         </div>
       </section>
 
       <A1PromiseBar />
+
+      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <SectionHeading
+          action="Browse all"
+          description="Choose from pantry staples, spices, fresh vegetables, frozen favourites, snacks, drinks, and more."
+          eyebrow="Shop by category"
+          href="/products"
+          title="Find what you need quickly"
+        />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+          {categories.map((category) => (
+            <CategoryCard category={category} key={category.id} />
+          ))}
+        </div>
+      </section>
 
       <WeeklyOffersCarousel products={activeWeeklyOffers} />
 
@@ -439,24 +526,9 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeading
-          action="Browse all"
-          description="Choose from pantry staples, spices, fresh vegetables, frozen favourites, snacks, drinks, and more."
-          eyebrow="Shop by category"
-          href="/products"
-          title="Find what you need quickly"
-        />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {categories.map((category) => (
-            <CategoryCard category={category} key={category.id} />
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-border bg-background">
+      <section className="bg-background">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="a1-reveal relative min-h-[440px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_20px_70px_rgba(15,46,26,0.11)]">
+          <div className="a1-section-reveal relative min-h-[440px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_20px_70px_rgba(15,46,26,0.11)]">
             <Image
               alt="Fresh vegetables and herbs for curries, dal, momo nights, and everyday meals"
               className="absolute inset-0 h-full w-full object-cover"
@@ -504,7 +576,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <SectionHeading
           action="Shop featured"
           eyebrow="Featured products"
@@ -514,15 +586,15 @@ export default async function HomePage() {
         <ProductGrid products={featuredProducts.slice(0, 8)} />
       </section>
 
-      <section className="border-y border-border bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="bg-background">
+        <div className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Best sellers" title="Popular with local shoppers" />
           <ProductGrid emptyTitle="No best sellers yet" products={bestSellers.slice(0, 8)} />
         </div>
       </section>
 
-      <section className="border-y border-border bg-fresh-soft">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="bg-fresh-soft">
+        <div className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Why shop with A1 Haat Bazar?" title="A local grocery experience built on trust" />
           <div className="grid gap-4 md:grid-cols-4">
             {[
@@ -542,35 +614,34 @@ export default async function HomePage() {
 
       <StoreLocationSection />
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-lg border border-cta/20 bg-[linear-gradient(135deg,#FBF4E3_0%,#FFFFFF_70%,#FAF8F1_100%)] p-5 shadow-sm sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
-            <div className="relative">
-              <p className="text-sm font-bold uppercase text-fresh">Offer updates</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-primary">Weekly pantry offers and new arrivals.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-                Newsletter signup is coming soon. For now, browse weekly offers and best sellers directly from the catalog.
+      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1F5A2E_0%,#12391F_55%,#0F2E1A_100%)] p-6 text-white shadow-[0_24px_70px_rgba(15,46,26,0.28)] sm:p-10">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cta/15 blur-2xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-fresh/25 blur-2xl" aria-hidden="true" />
+          <div className="relative grid gap-6 lg:grid-cols-[1.2fr_auto] lg:items-center">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-cta-soft">Shop faster next time</p>
+              <h2 className="mt-3 max-w-xl text-3xl font-extrabold leading-tight sm:text-4xl">
+                Create a free account and check out in seconds.
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-50/85">
+                Track orders, save delivery addresses, and keep a wishlist of your favourite staples - all in one place.
               </p>
             </div>
-            <form className="relative flex flex-col gap-2 sm:flex-row">
-              <label className="sr-only" htmlFor="newsletter-email">
-                Email address
-              </label>
-              <input
-                className="min-h-12 flex-1 rounded-md border border-white/20 bg-white px-4 text-sm text-text placeholder:text-text-muted"
-                disabled
-                id="newsletter-email"
-                placeholder="Newsletter coming soon"
-                type="email"
-              />
-              <button
-                className="a1-primary-button cursor-not-allowed px-5 text-sm opacity-80"
-                disabled
-                type="button"
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-cta px-7 text-sm font-extrabold text-white shadow-[0_14px_32px_rgba(198,146,46,0.4)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                href="/login?mode=register"
               >
-                Coming soon
-              </button>
-            </form>
+                Create free account
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 px-7 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                href="/products?sale=on"
+              >
+                Browse weekly offers
+              </Link>
+            </div>
           </div>
         </div>
       </section>

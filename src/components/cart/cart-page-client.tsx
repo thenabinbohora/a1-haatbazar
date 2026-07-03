@@ -141,8 +141,8 @@ export function CartPageClient() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-      <section className="rounded-lg border border-border bg-surface shadow-sm">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+      <section className="min-w-0 rounded-lg border border-border bg-surface shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase text-fresh">Cart</p>
@@ -285,7 +285,7 @@ export function CartPageClient() {
         </div>
       </section>
 
-      <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-24">
+      <aside className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-24">
         <p className="text-sm font-semibold uppercase text-fresh">Order summary</p>
         <h2 className="mt-1 text-2xl font-bold text-text">Estimated total</h2>
 

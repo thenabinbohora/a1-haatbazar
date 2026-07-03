@@ -26,7 +26,7 @@ export function ProductListingShell({
   filters,
   values,
   lockedCategorySlug,
-  eyebrow = "Shop groceries",
+  eyebrow = "Full catalog",
   categoryLinks = [],
   topContent,
   emptyTitle,

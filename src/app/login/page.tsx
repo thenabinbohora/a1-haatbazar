@@ -16,6 +16,7 @@ function message(error?: string, success?: string): LoginNotice | null {
   if (error === "invalid") return { tone: "error", text: "Invalid email or password." };
   if (error === "failed") return { tone: "error", text: "The account could not be created." };
   if (error === "reset_link_invalid") return { tone: "error", text: "This reset link is invalid or expired. Please request a new link." };
+  if (error === "rate-limited") return { tone: "error", text: "Too many attempts. Please wait a minute and try again." };
   return null;
 }
 
@@ -36,8 +37,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="bg-[linear-gradient(135deg,#FAF8F1_0%,#FFFFFF_58%,#EEF7EF_100%)]">
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:px-8 lg:pb-24">
-        <aside className="relative h-full overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(145deg,#174A27_0%,#12391F_58%,#0F2E1A_100%)] p-6 text-white shadow-[0_18px_45px_rgba(15,46,26,0.18)] sm:p-8">
+      <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-20 pt-8 sm:px-6 sm:pb-24 sm:pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8 lg:pb-28">
+        <aside className="relative overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(145deg,#174A27_0%,#12391F_58%,#0F2E1A_100%)] p-6 text-white shadow-[0_18px_45px_rgba(15,46,26,0.18)] sm:p-8">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border border-cta/25 bg-cta/10" />
           <div className="pointer-events-none absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-white/5" />
           <div className="relative">
@@ -70,7 +71,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </aside>
 
-        <div className="h-full">
+        <div>
           <CustomerAuthCard
             initialMode={initialMode}
             loginAction={customerLoginAction}

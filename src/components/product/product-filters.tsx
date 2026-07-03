@@ -9,38 +9,44 @@ type ProductFiltersProps = {
 };
 
 export function ProductFilters({ className = "", filters, values, lockedCategorySlug }: ProductFiltersProps) {
+  const selectedCategory = lockedCategorySlug ?? values.category ?? "";
+  const formAction = "/products";
+
   return (
     <aside className={`rounded-lg border border-border bg-surface p-4 shadow-sm ${className}`}>
       <div>
         <h2 className="text-base font-bold text-text">Filters</h2>
-        <p className="mt-1 text-sm text-text-muted">Refine by category, brand, price, offers, and availability.</p>
+        <p className="mt-1 text-sm text-text-muted">Switch aisles or refine by brand, price, offers, and availability.</p>
       </div>
 
-      <form action={lockedCategorySlug ? `/category/${lockedCategorySlug}` : "/products"} className="mt-5 space-y-4">
+      <form action={formAction} className="mt-5 space-y-4">
         {values.q ? <input name="q" type="hidden" value={values.q} /> : null}
 
-        {!lockedCategorySlug ? (
-          <label className="block">
-            <span className="text-sm font-semibold text-text">Category</span>
-            <select
-              className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
-              defaultValue={values.category ?? ""}
-              name="category"
-            >
-              <option value="">All categories</option>
-              {filters.categories.map((category) => (
-                <option key={category.id} value={category.slug}>
-                  {category.name} ({category.productCount})
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+        <label className="block">
+          <span className="text-sm font-semibold text-text">Category</span>
+          <select
+            className="mt-2 min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
+            defaultValue={selectedCategory}
+            name="category"
+          >
+            <option value="">All categories</option>
+            {filters.categories.map((category) => (
+              <option key={category.id} value={category.slug}>
+                {category.name} ({category.productCount})
+              </option>
+            ))}
+          </select>
+          {lockedCategorySlug ? (
+            <span className="mt-1.5 block text-xs font-semibold text-text-muted">
+              Choose another aisle and apply filters to switch categories.
+            </span>
+          ) : null}
+        </label>
 
         <label className="block">
           <span className="text-sm font-semibold text-text">Brand</span>
           <select
-            className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
+            className="mt-2 min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
             defaultValue={values.brand ?? ""}
             name="brand"
           >
@@ -89,18 +95,16 @@ export function ProductFilters({ className = "", filters, values, lockedCategory
             <input defaultChecked={values.sale === "on"} name="sale" type="checkbox" />
             Sale items
           </label>
-          {!lockedCategorySlug ? (
-            <label className="flex items-center gap-3 text-sm font-semibold text-text">
-              <input defaultChecked={values.freshVegetables === "on"} name="freshVegetables" type="checkbox" />
-              Fresh vegetables
-            </label>
-          ) : null}
+          <label className="flex items-center gap-3 text-sm font-semibold text-text">
+            <input defaultChecked={values.freshVegetables === "on"} name="freshVegetables" type="checkbox" />
+            Fresh vegetables
+          </label>
         </div>
 
         <label className="block">
           <span className="text-sm font-semibold text-text">Sort by</span>
           <select
-            className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
+            className="mt-2 min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta"
             defaultValue={values.sort ?? "newest"}
             name="sort"
           >

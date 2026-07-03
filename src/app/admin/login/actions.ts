@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSession, destroySession } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 function normalizeEmail(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -19,6 +20,10 @@ export async function loginAdminAction(formData: FormData) {
 
   if (!email || !password) {
     redirect("/admin/login?error=invalid");
+  }
+
+  if (isRateLimited("admin-login", `${await getClientIp()}:${email}`)) {
+    redirect("/admin/login?error=rate-limited");
   }
 
   const user = await prisma.user.findUnique({

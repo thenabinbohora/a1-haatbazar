@@ -120,9 +120,37 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
     setForgotNotice({ tone: "success", text: "If an account exists for this email, a reset link has been sent." });
   };
 
+  const segmentClass = (isSelected: boolean) =>
+    [
+      "min-h-10 cursor-pointer rounded-full text-sm font-bold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+      isSelected ? "bg-surface text-primary shadow-[0_2px_10px_rgba(15,46,26,0.12)]" : "text-text-muted hover:text-primary",
+    ].join(" ");
+
   return (
-    <div className="flex h-full flex-col rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
-      <div className="a1-auth-mode-panel flex flex-1 flex-col" key={mode}>
+    <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
+      {!isForgotMode ? (
+        <div aria-label="Choose sign in or create account" className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1" role="tablist">
+          <button
+            aria-selected={!isRegisterMode}
+            className={segmentClass(!isRegisterMode)}
+            onClick={() => switchMode("login")}
+            role="tab"
+            type="button"
+          >
+            Sign in
+          </button>
+          <button
+            aria-selected={isRegisterMode}
+            className={segmentClass(isRegisterMode)}
+            onClick={() => switchMode("register")}
+            role="tab"
+            type="button"
+          >
+            Create account
+          </button>
+        </div>
+      ) : null}
+      <div className="a1-auth-mode-panel" key={mode}>
         <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
           {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
@@ -137,16 +165,16 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               : "View orders, manage addresses, and save wishlist items."}
         </p>
 
-        <div className="mt-5 min-h-10" aria-live={displayNotice?.tone === "error" ? "assertive" : "polite"}>
-          {displayNotice ? (
+        {displayNotice ? (
+          <div className="mt-4" aria-live={displayNotice.tone === "error" ? "assertive" : "polite"}>
             <div className={noticeClass(displayNotice.tone)} role={displayNotice.tone === "error" ? "alert" : "status"}>
               {displayNotice.text}
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         {isForgotMode ? (
-          <form className="mt-6 grid gap-4" onSubmit={handleForgotSubmit}>
+          <form className="mt-4 grid gap-4" onSubmit={handleForgotSubmit}>
             <label className="block" htmlFor="forgot-email">
               <span className="text-sm font-bold text-text">Email</span>
             </label>
@@ -170,7 +198,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             </button>
           </form>
         ) : isRegisterMode ? (
-          <form action={registerAction} className="mt-6 grid gap-4">
+          <form action={registerAction} className="mt-4 grid gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="register-name">
               <span className="text-sm font-bold text-text">Full name</span>
@@ -215,7 +243,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
           </form>
         ) : (
-          <form action={loginAction} className="mt-6 grid gap-4">
+          <form action={loginAction} className="mt-4 grid gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="login-email">
               <span className="text-sm font-bold text-text">Email</span>
@@ -251,16 +279,18 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         )}
       </div>
 
-      <div className="mt-6 border-t border-border pt-5 text-center text-sm text-text-muted">
-        {isForgotMode ? "Remembered your password?" : isRegisterMode ? "Already have an account?" : "New to A1 Haat Bazar?"}{" "}
-        <button
-          className="cursor-pointer font-semibold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
-          onClick={() => switchMode(isForgotMode || isRegisterMode ? "login" : "register")}
-          type="button"
-        >
-          {isForgotMode || isRegisterMode ? "Sign in" : "Create account"}
-        </button>
-      </div>
+      {isForgotMode ? (
+        <div className="mt-6 border-t border-border pt-5 text-center text-sm text-text-muted">
+          Remembered your password?{" "}
+          <button
+            className="cursor-pointer font-semibold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+            onClick={() => switchMode("login")}
+            type="button"
+          >
+            Sign in
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
