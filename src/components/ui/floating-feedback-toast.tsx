@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties } from "react";
 
 type FloatingFeedbackToastProps = {
@@ -13,6 +14,12 @@ type FloatingFeedbackToastProps = {
   onClose: () => void;
   tone?: "success" | "error";
 };
+
+const VIEWPORT_PADDING = 14;
+const ANCHOR_GAP = 8;
+const TOAST_MAX_WIDTH = 220;
+const FALLBACK_HEIGHT = 76;
+const MOBILE_BOTTOM_GUARD = 88;
 
 function InfoIcon({ tone }: { tone: "success" | "error" }) {
   return (
@@ -49,6 +56,8 @@ export function FloatingFeedbackToast({
   tone = "success",
 }: FloatingFeedbackToastProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [positionStyle, setPositionStyle] = useState<CSSProperties>({});
+  const toastRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const showFrame = window.requestAnimationFrame(() => setIsVisible(true));
@@ -62,55 +71,129 @@ export function FloatingFeedbackToast({
     };
   }, [duration, onClose, message]);
 
-  const positionStyle = useMemo<CSSProperties>(() => {
-    if (!anchorRect || typeof window === "undefined") {
-      return {};
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return;
     }
 
-    const toastWidth = Math.min(280, window.innerWidth - 24);
-    const left = Math.min(Math.max(anchorRect.left + anchorRect.width / 2 - toastWidth / 2, 12), window.innerWidth - toastWidth - 12);
-    const preferredTop = anchorRect.bottom + 10;
-    const top = preferredTop + 88 < window.innerHeight ? preferredTop : Math.max(12, anchorRect.top - 88);
+    function clamp(value: number, min: number, max: number) {
+      return Math.min(Math.max(value, min), max);
+    }
 
-    return {
-      left,
-      top,
-      width: toastWidth,
+    function getSafeBottom() {
+      return window.innerWidth < 1280 ? MOBILE_BOTTOM_GUARD : VIEWPORT_PADDING;
+    }
+
+    function getFallbackPosition(width: number): CSSProperties {
+      return {
+        left: clamp((window.innerWidth - width) / 2, VIEWPORT_PADDING, window.innerWidth - width - VIEWPORT_PADDING),
+        top: VIEWPORT_PADDING,
+        width,
+      };
+    }
+
+    function updatePosition() {
+      const toast = toastRef.current;
+      const width = Math.min(TOAST_MAX_WIDTH, window.innerWidth - VIEWPORT_PADDING * 2);
+      const height = toast?.offsetHeight ?? FALLBACK_HEIGHT;
+      const maxTop = window.innerHeight - getSafeBottom() - height;
+
+      if (!anchorRect || maxTop < VIEWPORT_PADDING) {
+        setPositionStyle(getFallbackPosition(width));
+        return;
+      }
+
+      const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+      const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+      const preferredSide = anchorCenterX < window.innerWidth / 2 ? "right" : "left";
+      const rightLeft = anchorRect.right + ANCHOR_GAP;
+      const leftLeft = anchorRect.left - width - ANCHOR_GAP;
+      const rightFits = rightLeft + width <= window.innerWidth - VIEWPORT_PADDING;
+      const leftFits = leftLeft >= VIEWPORT_PADDING;
+      const sideTop = clamp(anchorCenterY - height / 2, VIEWPORT_PADDING, maxTop);
+
+      if (preferredSide === "right" && rightFits) {
+        setPositionStyle({ left: rightLeft, top: sideTop, width });
+        return;
+      }
+
+      if (preferredSide === "left" && leftFits) {
+        setPositionStyle({ left: leftLeft, top: sideTop, width });
+        return;
+      }
+
+      if (rightFits) {
+        setPositionStyle({ left: rightLeft, top: sideTop, width });
+        return;
+      }
+
+      if (leftFits) {
+        setPositionStyle({ left: leftLeft, top: sideTop, width });
+        return;
+      }
+
+      const centeredLeft = clamp(anchorCenterX - width / 2, VIEWPORT_PADDING, window.innerWidth - width - VIEWPORT_PADDING);
+      const belowTop = anchorRect.bottom + ANCHOR_GAP;
+      const aboveTop = anchorRect.top - height - ANCHOR_GAP;
+
+      if (belowTop <= maxTop) {
+        setPositionStyle({ left: centeredLeft, top: belowTop, width });
+        return;
+      }
+
+      if (aboveTop >= VIEWPORT_PADDING) {
+        setPositionStyle({ left: centeredLeft, top: aboveTop, width });
+        return;
+      }
+
+      setPositionStyle(getFallbackPosition(width));
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [anchorRect]);
+  }, [anchorRect, message]);
 
-  const isAnchored = Boolean(anchorRect);
+  if (typeof document === "undefined") {
+    return null;
+  }
 
-  return (
+  return createPortal(
     <div
       className={[
-        "pointer-events-auto fixed z-[70] rounded-2xl border bg-surface px-3.5 py-3 text-sm shadow-[0_18px_44px_rgba(15,46,26,0.18)] transition-[opacity,transform] duration-200 motion-reduce:transition-none",
-        isAnchored ? "" : "inset-x-3 bottom-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+0.875rem)] mx-auto max-w-[22rem]",
-        tone === "error" ? "border-cta/35 text-primary" : "border-fresh/25 text-primary",
+        "pointer-events-auto fixed z-[90] max-w-[220px] rounded-xl border bg-[#fffef8] px-3 py-2.5 text-sm shadow-[0_18px_44px_rgba(15,46,26,0.18)] transition-[opacity,transform] duration-200 motion-reduce:transition-none",
+        tone === "error" ? "border-cta/35 text-primary" : "border-fresh/30 text-primary",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
       ].join(" ")}
+      ref={toastRef}
       role="status"
       style={positionStyle}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <span
           className={[
-            "grid h-7 w-7 shrink-0 place-items-center rounded-full",
+            "grid h-6 w-6 shrink-0 place-items-center rounded-full",
             tone === "error" ? "bg-cta-soft text-cta-hover" : "bg-fresh-soft text-fresh",
           ].join(" ")}
         >
           <InfoIcon tone={tone} />
         </span>
-        <span className="min-w-0 flex-1 font-bold leading-5">{message}</span>
+        <span className="min-w-0 flex-1 text-xs font-extrabold leading-5 text-primary sm:text-sm">{message}</span>
         {actionHref && actionLabel ? (
           <Link
-            className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            className="shrink-0 rounded-full bg-primary px-2.5 py-1.5 text-xs font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={actionHref}
           >
             {actionLabel}
           </Link>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

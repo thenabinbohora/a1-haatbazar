@@ -22,7 +22,7 @@ type CustomerAuthCardProps = {
 };
 
 function inputClass() {
-  return "-mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20 sm:min-h-12";
+  return "-mt-2 min-h-11 w-full max-w-full min-w-0 rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20 sm:min-h-12";
 }
 
 function noticeClass(tone: LoginNotice["tone"]) {
@@ -122,14 +122,14 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
 
   const segmentClass = (isSelected: boolean) =>
     [
-      "min-h-10 cursor-pointer rounded-full text-sm font-bold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+      "min-h-10 min-w-0 cursor-pointer rounded-full px-2 text-sm font-bold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
       isSelected ? "bg-surface text-primary shadow-[0_2px_10px_rgba(15,46,26,0.12)]" : "text-text-muted hover:text-primary",
     ].join(" ");
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
+    <div className="mx-auto w-full max-w-[calc(100vw-2rem)] min-w-0 rounded-lg border border-border bg-surface p-4 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8 lg:max-w-none">
       {!isForgotMode ? (
-        <div aria-label="Choose sign in or create account" className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1 sm:mb-6" role="tablist">
+        <div aria-label="Choose sign in or create account" className="mb-5 grid w-full min-w-0 grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1 sm:mb-6" role="tablist">
           <button
             aria-selected={!isRegisterMode}
             className={segmentClass(!isRegisterMode)}
@@ -150,7 +150,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
           </button>
         </div>
       ) : null}
-      <div className="a1-auth-mode-panel" key={mode}>
+      <div className="a1-auth-mode-panel min-w-0" key={mode}>
         <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
           {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
@@ -174,7 +174,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         ) : null}
 
         {isForgotMode ? (
-          <form className="mt-4 grid gap-3.5 sm:gap-4" onSubmit={handleForgotSubmit}>
+          <form className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4" onSubmit={handleForgotSubmit}>
             <label className="block" htmlFor="forgot-email">
               <span className="text-sm font-bold text-text">Email</span>
             </label>
@@ -198,7 +198,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             </button>
           </form>
         ) : isRegisterMode ? (
-          <form action={registerAction} className="mt-4 grid gap-3.5 sm:gap-4">
+          <form action={registerAction} className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="register-name">
               <span className="text-sm font-bold text-text">Full name</span>
@@ -233,7 +233,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               name="phone"
               type="tel"
             />
-            <div>
+            <div className="min-w-0">
               <label className="block" htmlFor="register-password">
                 <span className="text-sm font-bold text-text">Password</span>
               </label>
@@ -243,7 +243,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
           </form>
         ) : (
-          <form action={loginAction} className="mt-4 grid gap-3.5 sm:gap-4">
+          <form action={loginAction} className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="login-email">
               <span className="text-sm font-bold text-text">Email</span>

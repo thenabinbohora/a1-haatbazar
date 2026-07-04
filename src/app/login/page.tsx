@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="overflow-x-clip bg-[linear-gradient(135deg,#FAF8F1_0%,#FFFFFF_58%,#EEF7EF_100%)]">
-      <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:gap-6 sm:px-6 sm:pb-24 sm:pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8 lg:pb-28">
+      <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:gap-6 sm:px-6 sm:pb-24 sm:pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8 lg:pb-28">
         <aside className="relative overflow-hidden rounded-lg border border-primary/15 bg-[linear-gradient(145deg,#174A27_0%,#12391F_58%,#0F2E1A_100%)] p-5 text-white shadow-[0_18px_45px_rgba(15,46,26,0.18)] sm:p-8">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border border-cta/25 bg-cta/10" />
           <div className="pointer-events-none absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-white/5" />
@@ -71,7 +71,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </aside>
 
-        <div>
+        <div className="mx-auto w-full max-w-[calc(100vw-2rem)] min-w-0 lg:max-w-none">
           <CustomerAuthCard
             initialMode={initialMode}
             loginAction={customerLoginAction}
