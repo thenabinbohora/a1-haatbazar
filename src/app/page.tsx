@@ -254,39 +254,24 @@ function StoreLocationSection() {
     },
     {
       icon: "clock",
-      label: "Opening hours",
+      label: "Store hours",
       value: STORE_CONFIG.openingHours,
-    },
-    {
-      icon: "pickup",
-      label: "Store pickup",
-      value: STORE_CONFIG.pickupMessage,
-    },
-    {
-      icon: "truck",
-      label: "Local delivery",
-      value: STORE_CONFIG.deliveryMessage,
-    },
-    {
-      icon: "wallet",
-      label: "Payment",
-      value: STORE_CONFIG.paymentMessage,
     },
   ] as const;
 
   return (
     <section className="border-b border-border bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8 lg:py-12">
         <SectionHeading
-          description="Shop online for delivery or choose store pickup at checkout."
+          description="Find us in Salisbury for store pickup, fresh groceries, and weekly essentials."
           eyebrow="Store pickup location"
-          title="Visit A1 Haat Bazar"
+          title="Visit our store"
         />
-        <div className="a1-section-reveal grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+        <div className="a1-section-reveal grid gap-4 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch lg:gap-5">
           <div className="rounded-lg border border-border bg-surface p-5 shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:p-6">
             <p className="text-sm font-bold uppercase text-fresh">Local Salisbury store</p>
             <h3 className="mt-2 text-2xl font-extrabold text-primary">{STORE_CONFIG.storeName}</h3>
-            <div className="mt-5 space-y-4">
+            <div className="mt-5 space-y-3.5">
               {storeDetails.map((detail) => (
                 <div className="flex gap-3" key={detail.label}>
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-fresh/15 bg-fresh-soft text-fresh">
@@ -305,35 +290,30 @@ function StoreLocationSection() {
             </div>
             <a
               aria-label={`Get directions to ${STORE_CONFIG.storeName} in Google Maps`}
-              className="a1-primary-button mt-6 w-full px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:w-auto"
+              className="a1-primary-button mt-5 w-full gap-2 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:w-auto"
               href={STORE_CONFIG.directionsUrl}
               rel="noopener noreferrer"
               target="_blank"
             >
+              <LocationIcon type="pin" />
               Get directions
             </a>
           </div>
 
-          <div className="min-h-[280px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:min-h-[320px] lg:min-h-[350px]">
-            <div className="flex min-h-[280px] flex-col sm:min-h-[320px] lg:min-h-[350px]">
+          <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_42px_rgba(15,46,26,0.08)]">
+            <div className="flex flex-col">
               <iframe
-                className="min-h-[220px] flex-1 border-0 sm:min-h-[240px] lg:min-h-0"
+                className="h-[240px] border-0 sm:h-[280px] lg:h-[350px]"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 src={STORE_CONFIG.mapEmbedUrl}
                 title="A1 Haat Bazar location map"
               />
-              <div className="border-t border-border bg-white/95 p-4">
+              <div className="border-t border-border bg-white/95 px-4 py-3">
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Store location</p>
-                <address className="mt-1 text-sm not-italic leading-5 text-text-muted">{STORE_CONFIG.address}</address>
-                <a
-                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-cta/35 bg-cta-soft px-4 text-sm font-extrabold text-primary transition-colors hover:border-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                  href={STORE_CONFIG.directionsUrl}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Open in Google Maps
-                </a>
+                <p className="mt-1 text-sm leading-5 text-text-muted">
+                  If the map preview is unavailable, use the directions button for Google Maps.
+                </p>
               </div>
             </div>
           </div>
@@ -385,6 +365,145 @@ function SectionHeading({
         </Link>
       ) : null}
     </div>
+  );
+}
+
+function TrustIcon({ type }: { type: "stock" | "delivery" | "pickup" | "secure" }) {
+  const paths = {
+    stock: (
+      <>
+        <path d="M5.3 18.4c6.8-.5 10.4-4.1 11.6-11.6C9.4 8 5.8 11.6 5.3 18.4Z" />
+        <path d="M5.3 18.4 12.1 11.6" />
+        <path d="M17.8 16.8a4.4 4.4 0 0 1-7.1 2.4" />
+        <path d="M15.5 14.5h3.1v3.1" />
+      </>
+    ),
+    delivery: (
+      <>
+        <path d="M3.8 7.5h10.4v8.6H3.8z" />
+        <path d="M14.2 10.1h3.1l2.9 3v3h-6" />
+        <path d="M7.1 19a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z" />
+        <path d="M16.9 19a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z" />
+      </>
+    ),
+    pickup: (
+      <>
+        <path d="M5 8.5h14l-1.4 10a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 8.5Z" />
+        <path d="M8.3 8.5 10.5 4" />
+        <path d="M15.7 8.5 13.5 4" />
+        <path d="M9.2 13.5h5.6" />
+      </>
+    ),
+    secure: (
+      <>
+        <path d="M12 3.8 18.2 6v5.2c0 4-2.5 7.5-6.2 9-3.7-1.5-6.2-5-6.2-9V6L12 3.8Z" />
+        <path d="M9.5 12.1 11.2 14l3.5-4" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      {paths[type]}
+    </svg>
+  );
+}
+
+function TrustSection() {
+  const trustCards = [
+    {
+      description: "See clear stock status before adding items to your cart.",
+      icon: "stock",
+      label: "Updated regularly",
+      title: "Fresh stock updated regularly",
+    },
+    {
+      description: "Choose delivery at checkout and we'll confirm details with you.",
+      icon: "delivery",
+      label: "Local service",
+      title: "Local delivery",
+    },
+    {
+      description: "Pickup is free. We'll let you know when your order is ready.",
+      icon: "pickup",
+      label: "Free pickup",
+      title: "Free store pickup",
+    },
+    {
+      description: "Save addresses, orders, and wishlist items securely.",
+      icon: "secure",
+      label: "Private & secure",
+      title: "Secure account",
+    },
+  ] as const;
+
+  return (
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_18%_8%,rgba(255,247,230,0.88)_0,rgba(255,247,230,0)_34%),radial-gradient(circle_at_86%_18%,rgba(238,247,239,0.95)_0,rgba(238,247,239,0)_36%),linear-gradient(180deg,#EEF7EF_0%,#F8FBF5_100%)]">
+      <div className="a1-section-reveal relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-fresh">
+            WHY SHOP WITH A1 HAAT BAZAR?
+          </p>
+          <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight text-text sm:text-3xl lg:text-4xl">
+            A local grocery experience built on trust
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-7 grid max-w-5xl gap-4 sm:mt-8 lg:grid-cols-2 lg:gap-5">
+          {trustCards.map((card, index) => {
+            const isFeatured = index === 0;
+
+            return (
+              <article
+                className={[
+                  "group relative overflow-hidden rounded-[1.45rem] border p-5 shadow-[0_18px_46px_rgba(15,46,26,0.08)] transition-[border-color,box-shadow,transform] duration-200 motion-reduce:transition-none sm:p-6",
+                  "md:hover:-translate-y-0.5 md:hover:shadow-[0_24px_58px_rgba(15,46,26,0.12)]",
+                  isFeatured
+                    ? "border-fresh/22 bg-[linear-gradient(180deg,#FFFFFF_0%,#F6FBF4_100%)]"
+                    : "border-[#E7DDC8] bg-[#FFFEF8]",
+                ].join(" ")}
+                key={card.title}
+              >
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-4 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(198,146,46,0.34),transparent)]"
+                />
+                <div className="flex items-start gap-4">
+                  <span
+                    className={[
+                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-200 motion-reduce:transition-none md:group-hover:scale-[1.03]",
+                      isFeatured
+                        ? "border-cta/25 bg-primary text-cta-soft"
+                        : "border-cta/25 bg-[#FFF9EA] text-primary",
+                    ].join(" ")}
+                  >
+                    <TrustIcon type={card.icon} />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-extrabold leading-6 text-text sm:text-lg">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-text-muted">{card.description}</p>
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <span className="inline-flex rounded-full border border-fresh/14 bg-fresh-soft/70 px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-primary">
+                    {card.label}
+                  </span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -593,24 +712,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-fresh-soft">
-        <div className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Why shop with A1 Haat Bazar?" title="A local grocery experience built on trust" />
-          <div className="grid gap-4 md:grid-cols-4">
-            {[
-              ["Fresh stock updated regularly", "Browse clear stock states before adding groceries to your cart."],
-              ["Local delivery", "Choose delivery at checkout and our team will confirm details with you."],
-              ["Store pickup", "Pickup is free. We will contact you when your order is ready."],
-              ["Secure account", "Save addresses, manage wishlist items, and track your order history."],
-            ].map(([title, text]) => (
-              <div className="rounded-lg border border-border bg-surface p-5" key={title}>
-                <h3 className="text-base font-bold text-text">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-text-muted">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TrustSection />
 
       <StoreLocationSection />
 

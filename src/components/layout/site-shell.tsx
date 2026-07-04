@@ -58,9 +58,7 @@ export function SiteShell({ children }: SiteShellProps) {
           <main className={`flex-1 ${hasTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] xl:pb-0" : ""}`} id="main-content" tabIndex={-1}>
             {children}
           </main>
-          <div className={hasTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+4rem)] xl:pb-0" : ""}>
-            <Footer />
-          </div>
+          <Footer hasMobileTabBar={hasTabBar} />
           <MiniCartDrawer />
           <Suspense fallback={null}>
             <MobileTabBar />

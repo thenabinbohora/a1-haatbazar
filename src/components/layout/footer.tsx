@@ -26,10 +26,14 @@ function FooterCheck() {
   );
 }
 
-export function Footer() {
+type FooterProps = {
+  hasMobileTabBar?: boolean;
+};
+
+export function Footer({ hasMobileTabBar = false }: FooterProps) {
   return (
     <footer className="border-t border-primary-muted bg-[linear-gradient(180deg,#12391F_0%,#0F2E1A_100%)] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-7 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] md:gap-8 lg:px-8 lg:py-12">
         <div>
           <BrandLogo display="full" variant="dark" />
           <p className="mt-4 max-w-xl text-sm leading-6 text-emerald-50/80">
@@ -94,7 +98,12 @@ export function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-emerald-50/60 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div
+          className={[
+            "mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-emerald-50/60 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5 lg:px-8",
+            hasMobileTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] xl:pb-5" : "",
+          ].join(" ")}
+        >
           <p>
             &copy; {new Date().getFullYear()} {STORE_CONFIG.storeName}. All rights reserved.
           </p>

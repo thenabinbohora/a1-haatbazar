@@ -8,4 +8,4 @@ export const BRAND_ICON_SRC = "/brand/a1-haat-bazar-favicon.png";
 
 export const BRAND_FAVICON_SRC = "/brand/a1-haat-bazar-favicon.ico";
 
-export const SUPPORT_EMAIL = "support@example.com";
+export const SUPPORT_EMAIL = "hello@a1haatbazar.com.au";
