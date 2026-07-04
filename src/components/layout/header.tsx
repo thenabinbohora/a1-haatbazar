@@ -45,12 +45,13 @@ function navLinkClass(isActive: boolean) {
 export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isSearchPage = pathname === "/search";
   const showNavbarSearch = Boolean(
     pathname?.startsWith("/products") ||
       pathname?.startsWith("/category/") ||
       pathname === "/offers" ||
       pathname === "/fresh-vegetables" ||
-      pathname === "/search",
+      isSearchPage,
   );
 
   return (
@@ -67,7 +68,7 @@ export function Header() {
           </div>
 
           {showNavbarSearch ? (
-            <div className="min-w-0">
+            <div className={`min-w-0 ${isSearchPage ? "hidden xl:block" : ""}`}>
               <SearchBox variant="header" />
             </div>
           ) : null}

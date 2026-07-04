@@ -55,10 +55,10 @@ export function SiteShell({ children }: SiteShellProps) {
           <Suspense fallback={null}>
             <Header />
           </Suspense>
-          <main className={`flex-1 ${hasTabBar ? "pb-[calc(5rem+env(safe-area-inset-bottom))] xl:pb-0" : ""}`} id="main-content" tabIndex={-1}>
+          <main className={`flex-1 ${hasTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] xl:pb-0" : ""}`} id="main-content" tabIndex={-1}>
             {children}
           </main>
-          <div className={hasTabBar ? "pb-[calc(8rem+env(safe-area-inset-bottom))] xl:pb-0" : ""}>
+          <div className={hasTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+4rem)] xl:pb-0" : ""}>
             <Footer />
           </div>
           <MiniCartDrawer />

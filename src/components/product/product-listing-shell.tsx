@@ -14,9 +14,13 @@ type ProductListingShellProps = {
   eyebrow?: string;
   categoryLinks?: Array<{ name: string; slug: string }>;
   topContent?: ReactNode;
+  topContentPlacement?: "before-results" | "after-results";
   emptyTitle?: string;
   emptyDescription?: string;
+  emptyActionHref?: string;
+  emptyActionLabel?: string;
   showHeaderSearch?: boolean;
+  compactMobileHeader?: boolean;
 };
 
 export function ProductListingShell({
@@ -29,9 +33,13 @@ export function ProductListingShell({
   eyebrow = "Full catalog",
   categoryLinks = [],
   topContent,
+  topContentPlacement = "before-results",
   emptyTitle,
   emptyDescription,
+  emptyActionHref,
+  emptyActionLabel,
   showHeaderSearch = false,
+  compactMobileHeader = false,
 }: ProductListingShellProps) {
   const selectedCategory = values.category
     ? filters.categories.find((category) => category.slug === values.category)?.name ?? values.category
@@ -51,12 +59,14 @@ export function ProductListingShell({
   return (
     <div className="bg-background">
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${compactMobileHeader ? "py-4 sm:py-8" : "py-8"}`}>
           <p className="text-sm font-semibold uppercase text-fresh">{eyebrow}</p>
-          <div className={showHeaderSearch ? "mt-3 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end" : "mt-3"}>
+          <div className={showHeaderSearch ? "mt-3 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end" : "mt-3"}>
             <div>
               <h1 className="max-w-3xl text-3xl font-bold leading-tight text-text sm:text-4xl">{title}</h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-text-muted">{description}</p>
+              <p className={`mt-3 max-w-2xl text-base leading-7 text-text-muted ${compactMobileHeader ? "hidden sm:block" : ""}`}>
+                {description}
+              </p>
             </div>
             {showHeaderSearch ? (
               <form action="/search" className="w-full max-w-xl lg:w-[420px]" role="search">
@@ -99,18 +109,27 @@ export function ProductListingShell({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {topContent ? <div className="mb-6">{topContent}</div> : null}
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <div className="lg:hidden">
-            <details className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-              <summary className="cursor-pointer text-sm font-bold text-primary">Filters and sort</summary>
-              <ProductFilters className="mt-4 border-0 p-0 shadow-none" filters={filters} lockedCategorySlug={lockedCategorySlug} values={values} />
+      <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${compactMobileHeader ? "py-4 sm:py-8" : "py-8"}`}>
+        {topContent && topContentPlacement === "before-results" ? <div className="mb-6">{topContent}</div> : null}
+        <div className="mb-4 lg:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-muted shadow-sm">
+            <p className="min-w-0">
+              <span className="font-semibold text-text">{products.length}</span> products found
+            </p>
+            <details className="relative shrink-0">
+              <summary className="cursor-pointer list-none rounded-full border border-primary/15 bg-fresh-soft px-3 py-1.5 text-xs font-extrabold text-primary transition-colors hover:border-cta/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta">
+                Filters and sort
+              </summary>
+              <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-[min(21rem,calc(100vw-2rem))] rounded-lg border border-border bg-surface p-4 shadow-[0_18px_44px_rgba(15,46,26,0.16)]">
+                <ProductFilters className="border-0 p-0 shadow-none" filters={filters} lockedCategorySlug={lockedCategorySlug} values={values} />
+              </div>
             </details>
           </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <ProductFilters className="hidden lg:block lg:sticky lg:top-28" filters={filters} lockedCategorySlug={lockedCategorySlug} values={values} />
         <div>
-          <div className="mb-4 flex flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 hidden flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted shadow-sm lg:flex lg:flex-row lg:items-center lg:justify-between">
             <p>
               <span className="font-semibold text-text">{products.length}</span> products found
             </p>
@@ -131,7 +150,14 @@ export function ProductListingShell({
               </Link>
             </div>
           ) : null}
-          <ProductGrid emptyDescription={emptyDescription} emptyTitle={emptyTitle} products={products} />
+          <ProductGrid
+            emptyActionHref={emptyActionHref}
+            emptyActionLabel={emptyActionLabel}
+            emptyDescription={emptyDescription}
+            emptyTitle={emptyTitle}
+            products={products}
+          />
+          {topContent && topContentPlacement === "after-results" ? <div className="mt-6">{topContent}</div> : null}
         </div>
         </div>
       </section>

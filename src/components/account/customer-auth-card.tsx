@@ -22,7 +22,7 @@ type CustomerAuthCardProps = {
 };
 
 function inputClass() {
-  return "-mt-2 min-h-12 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20";
+  return "-mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20 sm:min-h-12";
 }
 
 function noticeClass(tone: LoginNotice["tone"]) {
@@ -127,9 +127,9 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
     ].join(" ");
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
       {!isForgotMode ? (
-        <div aria-label="Choose sign in or create account" className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1" role="tablist">
+        <div aria-label="Choose sign in or create account" className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1 sm:mb-6" role="tablist">
           <button
             aria-selected={!isRegisterMode}
             className={segmentClass(!isRegisterMode)}
@@ -154,7 +154,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
           {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-text">
+        <h2 className="mt-2 text-2xl font-black tracking-tight text-text sm:text-3xl">
           {isForgotMode ? "Reset your password" : isRegisterMode ? "Create your account" : "Sign in to your account"}
         </h2>
         <p className="mt-2 text-sm leading-6 text-text-muted">
@@ -174,7 +174,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         ) : null}
 
         {isForgotMode ? (
-          <form className="mt-4 grid gap-4" onSubmit={handleForgotSubmit}>
+          <form className="mt-4 grid gap-3.5 sm:gap-4" onSubmit={handleForgotSubmit}>
             <label className="block" htmlFor="forgot-email">
               <span className="text-sm font-bold text-text">Email</span>
             </label>
@@ -198,7 +198,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             </button>
           </form>
         ) : isRegisterMode ? (
-          <form action={registerAction} className="mt-4 grid gap-4">
+          <form action={registerAction} className="mt-4 grid gap-3.5 sm:gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="register-name">
               <span className="text-sm font-bold text-text">Full name</span>
@@ -243,7 +243,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
           </form>
         ) : (
-          <form action={loginAction} className="mt-4 grid gap-4">
+          <form action={loginAction} className="mt-4 grid gap-3.5 sm:gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="login-email">
               <span className="text-sm font-bold text-text">Email</span>

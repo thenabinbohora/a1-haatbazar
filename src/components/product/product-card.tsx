@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { StorefrontProductCard } from "@/lib/storefront";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
 import { formatCurrency } from "@/components/product/price";
+import { FloatingFeedbackToast } from "@/components/ui/floating-feedback-toast";
 import { useCart } from "@/store/cart-store";
 import { useWishlist } from "@/store/wishlist-store";
 
@@ -60,54 +61,39 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function CheckIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="mr-1.5 h-3.5 w-3.5 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.4"
-      viewBox="0 0 24 24"
-    >
-      <path d="m5 12 4 4 10-9" />
-    </svg>
-  );
-}
+type FloatingNotice = {
+  actionHref?: string;
+  actionLabel?: string;
+  anchorRect?: DOMRect | null;
+  message: string;
+  tone: "success" | "error";
+};
 
 export function ProductCard({ product, variant = "standard", imagePriority = false }: ProductCardProps) {
   const { addItem } = useCart();
   const { isSaved: isProductSaved, setSaved } = useWishlist();
-  const [notice, setNotice] = useState<string | null>(null);
-  const [noticeTone, setNoticeTone] = useState<"success" | "error">("success");
+  const [floatingNotice, setFloatingNotice] = useState<FloatingNotice | null>(null);
   const isSaved = isProductSaved(product.id);
-  const noticeTimerRef = useRef<number | null>(null);
+  const heartButtonRef = useRef<HTMLButtonElement | null>(null);
+  const addButtonRef = useRef<HTMLButtonElement | null>(null);
   const canDirectAdd = product.sellableVariantCount === 1 && product.isInStock && product.leadVariantStock > 0;
   const isCompact = variant === "compact";
   const detailLabel = "View details";
   const optionLabel = "Select pack";
+  const productHref = `/products/${product.slug}`;
 
-  useEffect(() => {
-    return () => {
-      if (noticeTimerRef.current) {
-        window.clearTimeout(noticeTimerRef.current);
-      }
-    };
-  }, []);
-
-  function showInlineNotice(message: string, tone: "success" | "error" = "success") {
-    if (noticeTimerRef.current) {
-      window.clearTimeout(noticeTimerRef.current);
-    }
-
-    setNotice(message);
-    setNoticeTone(tone);
-    noticeTimerRef.current = window.setTimeout(() => {
-      setNotice(null);
-      noticeTimerRef.current = null;
-    }, 3000);
+  function showFloatingNotice(
+    message: string,
+    tone: "success" | "error" = "success",
+    anchor: HTMLElement | null = null,
+    action?: Pick<FloatingNotice, "actionHref" | "actionLabel">,
+  ) {
+    setFloatingNotice({
+      ...action,
+      anchorRect: anchor?.getBoundingClientRect() ?? null,
+      message,
+      tone,
+    });
   }
 
   function addSingleVariant() {
@@ -118,7 +104,7 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
       maxStock: product.leadVariantStock,
     });
 
-    showInlineNotice("Added to cart");
+    showFloatingNotice("Added to cart", "success", addButtonRef.current);
   }
 
   async function toggleWishlist() {
@@ -129,18 +115,22 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
     });
 
     if (response.status === 401) {
-      showInlineNotice("Sign in to save this product.", "error");
+      const nextPath = `${window.location.pathname}${window.location.search}`;
+      showFloatingNotice("Sign in to save items", "error", heartButtonRef.current, {
+        actionHref: `/login?next=${encodeURIComponent(nextPath)}`,
+        actionLabel: "Sign in",
+      });
       return;
     }
 
     if (!response.ok) {
-      showInlineNotice("Wishlist could not be updated.", "error");
+      showFloatingNotice("Wishlist could not be updated", "error", heartButtonRef.current);
       return;
     }
 
     const result = (await response.json()) as { saved: boolean };
     setSaved(product.id, result.saved);
-    showInlineNotice(result.saved ? "Saved to wishlist" : "Removed from wishlist");
+    showFloatingNotice(result.saved ? "Saved to wishlist" : "Removed from wishlist", "success", heartButtonRef.current);
   }
 
   return (
@@ -148,7 +138,7 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
       <Link
         aria-label={`View ${product.name}`}
         className="relative block aspect-square bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-        href={`/products/${product.slug}`}
+        href={productHref}
         scroll
       >
         {product.imageUrl ? (
@@ -182,10 +172,21 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
           isSaved ? "text-danger" : "text-primary",
         ].join(" ")}
         onClick={toggleWishlist}
+        ref={heartButtonRef}
         type="button"
       >
         <HeartIcon filled={isSaved} />
       </button>
+      {floatingNotice ? (
+        <FloatingFeedbackToast
+          actionHref={floatingNotice.actionHref}
+          actionLabel={floatingNotice.actionLabel}
+          anchorRect={floatingNotice.anchorRect}
+          message={floatingNotice.message}
+          onClose={() => setFloatingNotice(null)}
+          tone={floatingNotice.tone}
+        />
+      ) : null}
 
       <div className={["flex flex-1 flex-col", isCompact ? "p-3 sm:p-3.5" : "p-3 sm:p-4"].join(" ")}>
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -200,7 +201,7 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
           <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-text sm:text-base sm:leading-6">
             <Link
               className="rounded-sm transition-colors hover:text-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              href={`/products/${product.slug}`}
+              href={productHref}
               scroll
             >
               {product.name}
@@ -225,36 +226,27 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
           </div>
         </div>
 
-        <div
-          className={[
-            "mt-2 flex min-h-5 items-center text-[0.68rem] font-bold sm:mt-3 sm:text-xs",
-            noticeTone === "error" ? "text-danger" : "text-primary",
-            notice ? "opacity-100" : "opacity-0",
-          ].join(" ")}
-          aria-live="polite"
-        >
-          {notice ? (
-            <>
-              <CheckIcon />
-              <span className="line-clamp-1">{notice}</span>
-            </>
-          ) : (
-            <span aria-hidden="true">&nbsp;</span>
-          )}
-        </div>
-
-        <div className="mt-1.5 grid grid-cols-1 gap-2 sm:mt-2 sm:grid-cols-[0.9fr_1.1fr]">
+        <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-[0.9fr_1.1fr] sm:pt-4">
           <Link
             className="hidden min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-md border border-border/80 bg-transparent px-3 py-2 text-center text-sm font-bold text-text-muted transition-colors hover:border-primary/30 hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:inline-flex"
-            href={`/products/${product.slug}`}
+            href={productHref}
             scroll
           >
             {detailLabel}
           </Link>
-          {canDirectAdd ? (
+          {!product.isInStock ? (
+            <button
+              className="min-h-10 min-w-0 cursor-not-allowed whitespace-nowrap rounded-md bg-surface-muted px-2 py-2 text-center text-xs font-extrabold text-text-muted sm:min-h-11 sm:px-3 sm:text-sm"
+              disabled
+              type="button"
+            >
+              Out of stock
+            </button>
+          ) : canDirectAdd ? (
             <button
               className="a1-primary-button min-h-10 min-w-0 cursor-pointer whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
               onClick={addSingleVariant}
+              ref={addButtonRef}
               type="button"
             >
               <span className="sm:hidden">Add</span>
@@ -263,10 +255,10 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
           ) : (
             <Link
               className="a1-primary-button min-h-10 min-w-0 whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
-              href={`/products/${product.slug}`}
+              href={productHref}
               scroll
             >
-              {product.variantCount > 1 ? optionLabel : "Details"}
+              {optionLabel}
             </Link>
           )}
         </div>

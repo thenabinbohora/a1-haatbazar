@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { StorefrontProductCard } from "@/lib/storefront";
 import { ProductCard } from "@/components/product/product-card";
 
@@ -5,6 +6,8 @@ type ProductGridProps = {
   products: StorefrontProductCard[];
   emptyTitle?: string;
   emptyDescription?: string;
+  emptyActionHref?: string;
+  emptyActionLabel?: string;
   variant?: "standard" | "related";
 };
 
@@ -12,6 +15,8 @@ export function ProductGrid({
   products,
   emptyTitle = "No products found",
   emptyDescription = "Try a different search, category, or filter combination.",
+  emptyActionHref,
+  emptyActionLabel,
   variant = "standard",
 }: ProductGridProps) {
   if (products.length === 0) {
@@ -19,6 +24,14 @@ export function ProductGrid({
       <div className="rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
         <p className="text-lg font-bold text-text">{emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted">{emptyDescription}</p>
+        {emptyActionHref && emptyActionLabel ? (
+          <Link
+            className="a1-primary-button mt-4 inline-flex px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            href={emptyActionHref}
+          >
+            {emptyActionLabel}
+          </Link>
+        ) : null}
       </div>
     );
   }

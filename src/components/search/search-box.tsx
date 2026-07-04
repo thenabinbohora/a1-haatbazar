@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import type { CSSProperties, RefObject } from "react";
+import { createPortal } from "react-dom";
 import { formatCurrency } from "@/components/product/price";
 
 type Suggestion = {
@@ -21,6 +23,8 @@ type SearchBoxProps = {
   placeholder?: string;
 };
 
+const quickSearches = ["basmati rice", "momo masala", "wai wai", "tea", "ghee"] as const;
+
 function SearchIcon({ className }: { className: string }) {
   return (
     <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24">
@@ -30,17 +34,175 @@ function SearchIcon({ className }: { className: string }) {
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24">
+      <path d="m6 6 12 12" />
+      <path d="m18 6-12 12" />
+    </svg>
+  );
+}
+
+type SearchSuggestionsPanelProps = {
+  activeIndex: number;
+  isLoading: boolean;
+  listboxId: string;
+  onSearchAll: () => void;
+  onSelectQuickSearch: (value: string) => void;
+  onSelectSuggestion: (suggestion: Suggestion) => void;
+  panelRef: RefObject<HTMLDivElement | null>;
+  panelStyle: CSSProperties;
+  query: string;
+  setActiveIndex: (index: number) => void;
+  suggestions: Suggestion[];
+};
+
+function SearchSuggestionsPanel({
+  activeIndex,
+  isLoading,
+  listboxId,
+  onSearchAll,
+  onSelectQuickSearch,
+  onSelectSuggestion,
+  panelRef,
+  panelStyle,
+  query,
+  setActiveIndex,
+  suggestions,
+}: SearchSuggestionsPanelProps) {
+  const trimmedQuery = query.trim();
+  const showQuickSearches = trimmedQuery.length === 0;
+  const showEmptyState = trimmedQuery.length >= 2 && !isLoading && suggestions.length === 0;
+
+  return (
+    <div
+      className="a1-menu-enter fixed z-[80] overflow-y-auto rounded-2xl border border-border bg-white p-2 shadow-[0_24px_60px_rgba(15,46,26,0.2)]"
+      id={listboxId}
+      ref={panelRef}
+      role={suggestions.length > 0 ? "listbox" : undefined}
+      style={panelStyle}
+    >
+      {showQuickSearches ? (
+        <div>
+          <p className="px-2 pb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Quick searches</p>
+          <div className="flex flex-wrap gap-2">
+            {quickSearches.map((term) => (
+              <button
+                className="min-h-9 cursor-pointer rounded-full border border-primary/12 bg-fresh-soft/75 px-3 text-sm font-bold text-primary transition-colors hover:border-cta/40 hover:bg-cta-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                key={term}
+                onClick={() => onSelectQuickSearch(term)}
+                type="button"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className="px-3 py-4 text-sm font-semibold text-text-muted" role="status">
+          Searching groceries...
+        </div>
+      ) : null}
+
+      {suggestions.length > 0 ? (
+        <ul>
+          {suggestions.map((suggestion, index) => (
+            <li key={suggestion.id} role="option" aria-selected={index === activeIndex}>
+              <button
+                className={[
+                  "flex w-full cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors",
+                  index === activeIndex ? "bg-fresh-soft" : "hover:bg-surface-muted",
+                ].join(" ")}
+                onClick={() => onSelectSuggestion(suggestion)}
+                onMouseEnter={() => setActiveIndex(index)}
+                type="button"
+              >
+                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted">
+                  {suggestion.imageUrl ? (
+                    <Image alt="" className="h-full w-full object-cover" fill sizes="44px" src={suggestion.imageUrl} unoptimized />
+                  ) : null}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-text">{suggestion.name}</span>
+                  <span className="block truncate text-xs font-semibold text-text-muted">{suggestion.categoryName}</span>
+                </span>
+                <span className="shrink-0 text-sm font-extrabold tabular-nums text-primary">
+                  {formatCurrency(suggestion.startingPrice, suggestion.currency)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {showEmptyState ? (
+        <div className="rounded-xl bg-surface-muted/60 px-3 py-4">
+          <p className="text-sm font-bold text-text">No quick matches found.</p>
+          <p className="mt-1 text-xs font-semibold text-text-muted">Search all groceries for more results.</p>
+          <button
+            className="mt-3 min-h-10 cursor-pointer rounded-full bg-primary px-4 text-sm font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            onClick={onSearchAll}
+            type="button"
+          >
+            Search all groceries
+          </button>
+        </div>
+      ) : null}
+
+      {trimmedQuery.length >= 2 && suggestions.length > 0 ? (
+        <button
+          className="mt-1 w-full cursor-pointer rounded-xl border-t border-border px-3 py-2.5 text-left text-sm font-bold text-cta-hover transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+          onClick={onSearchAll}
+          type="button"
+        >
+          See all results for &quot;{trimmedQuery}&quot;
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function SearchBox({ variant = "header", placeholder = "Search rice, masala, noodles, tea" }: SearchBoxProps) {
   const router = useRouter();
   const listboxId = useId();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
   const containerRef = useRef<HTMLFormElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isHero = variant === "hero";
+
+  const updatePanelPosition = useCallback(() => {
+    const container = containerRef.current;
+
+    if (!container || typeof window === "undefined") {
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const viewportPadding = 12;
+    const top = rect.bottom + 8;
+    const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
+    const left = Math.min(
+      Math.max(rect.left, viewportPadding),
+      Math.max(viewportPadding, window.innerWidth - width - viewportPadding),
+    );
+    const maxHeight = Math.max(180, Math.min(320, window.innerHeight - top - viewportPadding));
+
+    setPanelStyle({
+      left,
+      maxHeight,
+      top,
+      width,
+    });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -58,7 +220,11 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target) &&
+        !panelRef.current?.contains(event.target)
+      ) {
         setIsOpen(false);
         setActiveIndex(-1);
       }
@@ -69,6 +235,21 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    updatePanelPosition();
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
+    };
+  }, [isOpen, isLoading, query, suggestions.length, updatePanelPosition]);
+
   function fetchSuggestions(value: string) {
     abortRef.current?.abort();
 
@@ -76,23 +257,33 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
 
     if (trimmed.length < 2) {
       setSuggestions([]);
-      setIsOpen(false);
+      setIsLoading(false);
       return;
     }
 
     const controller = new AbortController();
     abortRef.current = controller;
+    setIsLoading(true);
+    setIsOpen(true);
 
     fetch(`/api/search/suggest?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { suggestions?: Suggestion[] } | null) => {
-        if (data?.suggestions) {
-          setSuggestions(data.suggestions);
-          setIsOpen(true);
+        if (!controller.signal.aborted) {
+          setSuggestions(data?.suggestions ?? []);
           setActiveIndex(-1);
         }
       })
-      .catch(() => null);
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setSuggestions([]);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      });
   }
 
   function handleChange(value: string) {
@@ -100,6 +291,15 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
 
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
+    }
+
+    if (value.trim().length === 0) {
+      abortRef.current?.abort();
+      setSuggestions([]);
+      setIsLoading(false);
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
     }
 
     debounceRef.current = window.setTimeout(() => fetchSuggestions(value), 220);
@@ -112,6 +312,12 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
     if (!isOpen || suggestions.length === 0) {
       return;
     }
@@ -125,16 +331,35 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       goToProduct(suggestions[activeIndex]!);
-    } else if (event.key === "Escape") {
-      setIsOpen(false);
-      setActiveIndex(-1);
     }
+  }
+
+  function clearSearch() {
+    abortRef.current?.abort();
+    setQuery("");
+    setSuggestions([]);
+    setIsLoading(false);
+    setIsOpen(false);
+    setActiveIndex(-1);
+  }
+
+  function searchAll(value = query.trim()) {
+    const trimmed = value.trim();
+
+    setIsOpen(false);
+    setActiveIndex(-1);
+    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+  }
+
+  function selectQuickSearch(value: string) {
+    setQuery(value);
+    fetchSuggestions(value);
   }
 
   return (
     <form
       action="/search"
-      className="relative min-w-0"
+      className="relative z-30 min-w-0 focus-within:z-[65]"
       onSubmit={() => {
         setIsOpen(false);
         setActiveIndex(-1);
@@ -163,9 +388,14 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
           ].join(" ")}
           id={`${listboxId}-input`}
           name="q"
+          onClick={() => {
+            if (query.trim().length === 0) {
+              setIsOpen(true);
+            }
+          }}
           onChange={(event) => handleChange(event.target.value)}
           onFocus={() => {
-            if (suggestions.length > 0 && query.trim().length >= 2) {
+            if (query.trim().length === 0 || suggestions.length > 0 || isLoading) {
               setIsOpen(true);
             }
           }}
@@ -175,6 +405,16 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
           type="search"
           value={query}
         />
+        {query ? (
+          <button
+            aria-label="Clear search"
+            className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-text-muted transition-colors hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            onClick={clearSearch}
+            type="button"
+          >
+            <CloseIcon />
+          </button>
+        ) : null}
         <button
           aria-label="Search"
           className={[
@@ -187,52 +427,27 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
         </button>
       </div>
 
-      {isOpen && suggestions.length > 0 ? (
-        <ul
-          className="a1-menu-enter absolute inset-x-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border bg-surface py-1.5 shadow-[0_24px_60px_rgba(15,46,26,0.16)]"
-          id={listboxId}
-          role="listbox"
-        >
-          {suggestions.map((suggestion, index) => (
-            <li key={suggestion.id} role="option" aria-selected={index === activeIndex}>
-              <button
-                className={[
-                  "flex w-full cursor-pointer items-center gap-3 px-3.5 py-2.5 text-left transition-colors",
-                  index === activeIndex ? "bg-fresh-soft" : "hover:bg-surface-muted",
-                ].join(" ")}
-                onClick={() => goToProduct(suggestion)}
-                onMouseEnter={() => setActiveIndex(index)}
-                type="button"
-              >
-                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted">
-                  {suggestion.imageUrl ? (
-                    <Image alt="" className="h-full w-full object-cover" fill sizes="44px" src={suggestion.imageUrl} unoptimized />
-                  ) : null}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-text">{suggestion.name}</span>
-                  <span className="block text-xs font-semibold text-text-muted">{suggestion.categoryName}</span>
-                </span>
-                <span className="shrink-0 text-sm font-extrabold tabular-nums text-primary">
-                  {formatCurrency(suggestion.startingPrice, suggestion.currency)}
-                </span>
-              </button>
-            </li>
-          ))}
-          <li className="border-t border-border">
-            <button
-              className="w-full cursor-pointer px-3.5 py-2.5 text-left text-sm font-bold text-cta-hover transition-colors hover:bg-surface-muted"
-              onClick={() => {
-                setIsOpen(false);
-                router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-              }}
-              type="button"
-            >
-              See all results for &quot;{query.trim()}&quot;
-            </button>
-          </li>
-        </ul>
-      ) : null}
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[70] bg-primary/[0.025] md:hidden" />
+              <SearchSuggestionsPanel
+                activeIndex={activeIndex}
+                isLoading={isLoading}
+                listboxId={listboxId}
+                onSearchAll={() => searchAll()}
+                onSelectQuickSearch={selectQuickSearch}
+                onSelectSuggestion={goToProduct}
+                panelRef={panelRef}
+                panelStyle={panelStyle}
+                query={query}
+                setActiveIndex={setActiveIndex}
+                suggestions={suggestions}
+              />
+            </>,
+            document.body,
+          )
+        : null}
     </form>
   );
 }
