@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { ResetPasswordForm } from "@/components/account/reset-password-form";
+
+export const metadata: Metadata = {
+  title: "Reset password",
+  description: "Set a new password for your A1 Haat Bazar account.",
+  robots: { index: false },
+};
 import { resetCustomerPasswordAction } from "@/app/reset-password/actions";
 import { getSupabaseRecoveryUser } from "@/lib/supabase-auth-server";
 

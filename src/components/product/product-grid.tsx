@@ -40,8 +40,8 @@ export function ProductGrid({
     <div
       className={
         variant === "related"
-          ? "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
-          : "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+          ? "grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+          : "grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
       }
     >
       {products.map((product, index) => (
@@ -58,10 +58,13 @@ export function ProductGrid({
 
 export function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" aria-label="Loading products">
+    <div
+      className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      aria-label="Loading products"
+    >
       {Array.from({ length: 8 }).map((_, index) => (
         <div className="rounded-lg border border-border bg-surface p-3 shadow-sm" key={index}>
-          <div className="skeleton-shimmer aspect-square rounded-md" />
+          <div className="skeleton-shimmer aspect-[4/3] rounded-md" />
           <div className="skeleton-shimmer mt-4 h-4 w-24 rounded" />
           <div className="skeleton-shimmer mt-3 h-5 w-4/5 rounded" />
           <div className="skeleton-shimmer mt-2 h-4 w-full rounded" />

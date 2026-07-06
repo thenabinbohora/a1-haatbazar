@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Search",
   description: "Search grocery products by name, description, category, brand, and sale status.",
+  robots: { index: false },
 };
 
 type SearchPageProps = {

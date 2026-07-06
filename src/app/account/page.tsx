@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { customerLogoutAction } from "@/app/login/actions";
+
+export const metadata: Metadata = {
+  title: "My account",
+  description: "Manage your A1 Haat Bazar account, orders, addresses, and wishlist.",
+  robots: { index: false },
+};
 import { AccountNav } from "@/components/account/account-nav";
 import { formatCurrency } from "@/components/product/price";
 import { requireCustomer } from "@/lib/auth";

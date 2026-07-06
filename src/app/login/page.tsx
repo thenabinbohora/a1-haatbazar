@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { customerLoginAction, customerRegisterAction } from "@/app/login/actions";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { CustomerAuthCard, type LoginNotice } from "@/components/account/customer-auth-card";
+
+export const metadata: Metadata = {
+  title: "Sign in or create account",
+  description: "Sign in to your A1 Haat Bazar account to track orders, save addresses, and keep a wishlist.",
+  robots: { index: false },
+};
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string; success?: string; mode?: string; next?: string }>;

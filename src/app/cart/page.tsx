@@ -4,6 +4,7 @@ import { CartPageClient } from "@/components/cart/cart-page-client";
 export const metadata: Metadata = {
   title: "Cart",
   description: "Review grocery cart items, quantities, subtotal, and estimated total.",
+  robots: { index: false },
 };
 
 export default function CartPage() {

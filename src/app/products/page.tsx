@@ -10,7 +10,17 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop groceries",
-  description: "Browse authentic Nepali, Indian, Asian, and everyday grocery essentials.",
+  description:
+    "Browse authentic Nepali, Indian, Asian, and everyday grocery essentials from A1 Haat Bazar in Salisbury, Adelaide.",
+  alternates: {
+    canonical: "/products",
+  },
+  openGraph: {
+    title: "Shop groceries",
+    description:
+      "Browse authentic Nepali, Indian, Asian, and everyday grocery essentials from A1 Haat Bazar in Salisbury, Adelaide.",
+    url: "/products",
+  },
 };
 
 type ProductsPageProps = {

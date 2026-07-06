@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Order placed",
   description: "Your A1 Haat Bazar grocery order has been placed.",
+  robots: { index: false },
 };
 
 type CheckoutSuccessPageProps = {

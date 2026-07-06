@@ -109,7 +109,7 @@ export function ProductListingShell({
         </div>
       </section>
 
-      <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${compactMobileHeader ? "py-4 sm:py-8" : "py-8"}`}>
+      <section className={`mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 ${compactMobileHeader ? "py-4 sm:py-8" : "py-8"}`}>
         {topContent && topContentPlacement === "before-results" ? <div className="mb-6">{topContent}</div> : null}
         <div className="mb-4 lg:hidden">
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-muted shadow-sm">
@@ -126,39 +126,39 @@ export function ProductListingShell({
             </details>
           </div>
         </div>
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
           <ProductFilters className="hidden lg:block lg:sticky lg:top-28" filters={filters} lockedCategorySlug={lockedCategorySlug} values={values} />
-        <div>
-          <div className="mb-4 hidden flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted shadow-sm lg:flex lg:flex-row lg:items-center lg:justify-between">
-            <p>
-              <span className="font-semibold text-text">{products.length}</span> products found
-            </p>
-            <p>Prices and stock are checked before your order is confirmed.</p>
-          </div>
-          {activeFilters.length ? (
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {activeFilters.map((filter) => (
-                <span className="rounded-full border border-cta/30 bg-cta-soft px-3 py-1 text-xs font-bold text-cta-hover" key={filter}>
-                  {filter}
-                </span>
-              ))}
-              <Link
-                className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-text-muted transition-colors hover:bg-surface-muted"
-                href={lockedCategorySlug ? `/category/${lockedCategorySlug}` : "/products"}
-              >
-                Clear filters
-              </Link>
+          <div className="min-w-0">
+            <div className="mb-4 hidden flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted shadow-sm lg:flex xl:flex-row xl:items-center xl:justify-between">
+              <p>
+                <span className="font-semibold text-text">{products.length}</span> products found
+              </p>
+              <p>Prices and stock are checked before your order is confirmed.</p>
             </div>
-          ) : null}
-          <ProductGrid
-            emptyActionHref={emptyActionHref}
-            emptyActionLabel={emptyActionLabel}
-            emptyDescription={emptyDescription}
-            emptyTitle={emptyTitle}
-            products={products}
-          />
-          {topContent && topContentPlacement === "after-results" ? <div className="mt-6">{topContent}</div> : null}
-        </div>
+            {activeFilters.length ? (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {activeFilters.map((filter) => (
+                  <span className="rounded-full border border-cta/30 bg-cta-soft px-3 py-1 text-xs font-bold text-cta-hover" key={filter}>
+                    {filter}
+                  </span>
+                ))}
+                <Link
+                  className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-text-muted transition-colors hover:bg-surface-muted"
+                  href={lockedCategorySlug ? `/category/${lockedCategorySlug}` : "/products"}
+                >
+                  Clear filters
+                </Link>
+              </div>
+            ) : null}
+            <ProductGrid
+              emptyActionHref={emptyActionHref}
+              emptyActionLabel={emptyActionLabel}
+              emptyDescription={emptyDescription}
+              emptyTitle={emptyTitle}
+              products={products}
+            />
+            {topContent && topContentPlacement === "after-results" ? <div className="mt-6">{topContent}</div> : null}
+          </div>
         </div>
       </section>
     </div>

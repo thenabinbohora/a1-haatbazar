@@ -2,11 +2,115 @@
 
 ## Current Stage
 
-Stage 13: Final UI/UX polish and responsiveness.
+Stage 16: Trust section ("Why shop with A1 Haat Bazar?") production polish.
 
 Status: Complete.
 
-Date: 2026-06-28
+Date: 2026-07-06
+
+## Completed In Stage 16
+
+- Kept the existing layout: desktop 2x2 grid, mobile stacked, soft sage radial-gradient background, "A local grocery experience built on trust" heading, and the final short copy plus micro-labels (all already matched the approved copy).
+- Unified icon badge styling: the featured first card keeps its deep green filled badge; the other three keep the cream fill but now use a green (`fresh`) border instead of gold, so all four badges read as one family. All badges are 48x48 with 20x20 icons at 1.8 stroke, centered via `grid place-items-center`.
+- Tightened card spacing: dropped the larger `sm:p-6` desktop padding to a uniform `p-5`, reduced the title-to-description gap to `mt-1.5`, and moved the micro-label to `mt-auto pt-4` inside a flex-column card so labels bottom-align.
+- Balanced card heights with `lg:auto-rows-fr` so all four desktop cards are exactly equal (verified 164px each at 1280px wide).
+- Refined desktop-only hover (all `md:` prefixed): 2px lift, slightly deeper shadow, subtly stronger border color per variant, icon badge scales to 1.02, 200ms transition, `motion-reduce:transition-none` preserved.
+- Trimmed section vertical padding (`py-9 sm:py-11 lg:py-12`, was `py-10 sm:py-12 lg:py-14`) and header-to-grid gap so the following "Visit our store" section sits closer, especially on mobile.
+- Accessibility unchanged and intact: icons are `aria-hidden`, text colors and sizes untouched, reduced motion respected.
+
+## Stage 16 Validation
+
+Passed:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Verified against a local production server (`next start`) via DOM inspection:
+
+- Desktop (1280px): 2-column grid, four equal 164px cards, labels aligned 21px from each card bottom, no horizontal overflow, 0.2s card transition.
+- Badges: featured card `rgb(23,74,39)` deep green fill, others cream `rgb(255,249,234)`; all 48x48 with centered 20x20 icons and matching green-tinted borders.
+- Mobile (375px): single stacked column, 36px section vertical padding, no transform at rest, no horizontal overflow; hover styles are `md:`-only so mobile is unaffected.
+- No browser console errors were captured during verification.
+
+Security checks:
+
+- No new dependencies were installed.
+- Changes are limited to Tailwind class strings in the homepage trust section; no data, auth, or write-action behavior was touched.
+
+## Completed In Stage 15
+
+- Diagnosed the "...." artifact on product cards: it was not manual truncation but a mid-string sentence period landing exactly at the CSS `line-clamp-2` cut, rendering as ".…".
+- Updated `customerProductSummary` in `src/lib/display.ts` to normalize literal ellipsis characters and dot runs, keep only the first sentence, and strip trailing punctuation, so clamped card descriptions can never show double punctuation.
+- Card descriptions continue to truncate purely via `line-clamp-2` (`line-clamp-1` in compact variant) with the browser's natural single ellipsis; no manual slicing or appended dots anywhere in card rendering. This applies to every card surface since they all render through `ProductGrid` → `ProductCard` (homepage featured/best sellers/fresh vegetables, products listing, search, category, offers, related products, wishlist).
+- Refined the "View details" link on product cards: plain text at rest, hover shows a thin (`decoration-1`) close (`underline-offset-2`) underline spanning only the text width (`w-fit`), with a subtle color shift to full primary.
+- Changed the product detail page meta description truncation to use a single `…` character instead of `...` (SEO metadata only; visible detail-page descriptions remain full and unclamped).
+- Added a `start` configuration and `autoPort` to `.claude/launch.json` so a verification server can run alongside the user's dev server on port 3000.
+
+## Stage 15 Validation
+
+Passed:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Verified against a local production server (`next start`):
+
+- Homepage featured cards: 11 descriptions, zero dot runs, zero trailing periods; the black tea card now reads "Rich black tea leaves for milk tea, masala chiya, and everyday brewing" with no "....".
+- `/products`: 18 cards, 12 clamp naturally via CSS with a single ellipsis, zero dot runs or trailing periods.
+- "View details" link measures 77px wide (text width, not card width), no decoration at rest, 2px underline offset on hover.
+- Product detail page still renders the full two-sentence description unchanged.
+- No browser console errors were captured during verification.
+
+Security checks:
+
+- No new dependencies were installed.
+- No auth, database, cart, wishlist, variant, filter, search, or Supabase behavior was changed; edits touch display formatting and one CSS class string only.
+
+## Completed In Stage 14
+
+- Added `metadataBase`, default Open Graph, Twitter card, keywords, and locale metadata in the root layout using a new `src/lib/site.ts` site URL helper (`APP_URL` / `NEXT_PUBLIC_SITE_URL` / Vercel URL fallback).
+- Set the default title to "A1 Haat Bazar | Authentic Nepali & Asian Groceries in Salisbury Adelaide" with a matching local-intent description.
+- Added `src/app/robots.ts` allowing public catalog pages and disallowing `/admin`, `/api`, `/account`, `/cart`, `/checkout`, `/wishlist`, `/login`, `/reset-password`, and `/auth`.
+- Added `src/app/sitemap.ts` serving static routes plus live category and active product URLs, with a safe static-only fallback if the database is unavailable.
+- Added `GroceryStore` JSON-LD (address, opening hours, area served) on the homepage via a new escaped `JsonLd` component.
+- Added `Product` (with `AggregateOffer`) and `BreadcrumbList` JSON-LD plus canonical URLs and Open Graph images to product detail pages.
+- Added canonical URLs and Open Graph data to `/products` and `/category/[slug]`.
+- Added `noindex` robots metadata to cart, checkout, checkout success, search, login, reset password, wishlist, and account pages.
+- Added a branded root `not-found.tsx` (shop/home/search CTAs) and root `error.tsx` (retry + home, logs only the error digest).
+- Documented in `.env.example` that `APP_URL` drives canonical URLs, robots, and the sitemap in production.
+
+## Stage 14 Validation
+
+Passed:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Verified with the local dev server:
+
+- `/robots.txt` serves the expected allow/disallow rules and sitemap link.
+- `/sitemap.xml` serves 30 URLs from the live catalog.
+- Homepage renders canonical, Open Graph, Twitter, and `GroceryStore` JSON-LD tags.
+- A product detail page renders canonical, Open Graph image, `Product` JSON-LD with `AggregateOffer` (AUD low/high price, availability), and `BreadcrumbList` JSON-LD.
+- `/cart` renders `noindex` robots metadata.
+- An invalid product URL renders the branded 404 page with header and footer.
+- No browser console errors were captured during verification.
+
+Security checks:
+
+- No new dependencies were installed.
+- JSON-LD output escapes `<` to prevent script breakout from data values.
+- No secrets were added; `.env.example` contains placeholders only.
+- No auth, database, or write-action behavior was changed.
 
 ## Completed In Stage 13
 

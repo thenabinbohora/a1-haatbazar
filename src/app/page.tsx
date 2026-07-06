@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
+import { JsonLd } from "@/components/seo/json-ld";
+import { APP_NAME, BRAND_LOGO_SRC, SUPPORT_EMAIL } from "@/lib/constants";
+import { absoluteUrl, getSiteUrl } from "@/lib/site";
 import { WeeklyOffersCarousel } from "@/components/home/weekly-offers-carousel";
 import { SearchBox } from "@/components/search/search-box";
 import { ProductGrid } from "@/components/product/product-grid";
@@ -12,6 +16,40 @@ import {
 } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
+
+const groceryStoreSchema = {
+  "@context": "https://schema.org",
+  "@type": "GroceryStore",
+  name: APP_NAME,
+  url: getSiteUrl(),
+  image: absoluteUrl(BRAND_LOGO_SRC),
+  email: SUPPORT_EMAIL,
+  priceRange: "$",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "3/170 Commercial Rd",
+    addressLocality: "Salisbury",
+    addressRegion: "SA",
+    postalCode: "5108",
+    addressCountry: "AU",
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "09:00",
+      closes: "19:00",
+    },
+  ],
+  areaServed: ["Salisbury", "Adelaide", "South Australia"],
+  hasMap: STORE_CONFIG.directionsUrl,
+};
 
 function CategoryCard({
   category,
@@ -257,6 +295,11 @@ function StoreLocationSection() {
       label: "Store hours",
       value: STORE_CONFIG.openingHours,
     },
+    {
+      icon: "pickup",
+      label: "Pickup",
+      value: STORE_CONFIG.pickupMessage,
+    },
   ] as const;
 
   return (
@@ -268,10 +311,10 @@ function StoreLocationSection() {
           title="Visit our store"
         />
         <div className="a1-section-reveal grid gap-4 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch lg:gap-5">
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:p-6">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:p-5 lg:p-6">
             <p className="text-sm font-bold uppercase text-fresh">Local Salisbury store</p>
             <h3 className="mt-2 text-2xl font-extrabold text-primary">{STORE_CONFIG.storeName}</h3>
-            <div className="mt-5 space-y-3.5">
+            <div className="mt-4 space-y-3.5 lg:mt-5">
               {storeDetails.map((detail) => (
                 <div className="flex gap-3" key={detail.label}>
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-fresh/15 bg-fresh-soft text-fresh">
@@ -303,16 +346,17 @@ function StoreLocationSection() {
           <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_42px_rgba(15,46,26,0.08)]">
             <div className="flex flex-col">
               <iframe
-                className="h-[240px] border-0 sm:h-[280px] lg:h-[350px]"
+                allowFullScreen
+                className="h-[260px] border-0 sm:h-[300px]"
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+                referrerPolicy="strict-origin-when-cross-origin"
                 src={STORE_CONFIG.mapEmbedUrl}
                 title="A1 Haat Bazar location map"
               />
               <div className="border-t border-border bg-white/95 px-4 py-3">
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Store location</p>
                 <p className="mt-1 text-sm leading-5 text-text-muted">
-                  If the map preview is unavailable, use the directions button for Google Maps.
+                  If the map does not load, use Get directions to open Google Maps.
                 </p>
               </div>
             </div>
@@ -448,7 +492,7 @@ function TrustSection() {
 
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(circle_at_18%_8%,rgba(255,247,230,0.88)_0,rgba(255,247,230,0)_34%),radial-gradient(circle_at_86%_18%,rgba(238,247,239,0.95)_0,rgba(238,247,239,0)_36%),linear-gradient(180deg,#EEF7EF_0%,#F8FBF5_100%)]">
-      <div className="a1-section-reveal relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+      <div className="a1-section-reveal relative mx-auto max-w-7xl px-4 pb-7 pt-9 sm:px-6 sm:pb-8 sm:pt-11 lg:px-8 lg:pb-9 lg:pt-12">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-fresh">
             WHY SHOP WITH A1 HAAT BAZAR?
@@ -458,18 +502,18 @@ function TrustSection() {
           </h2>
         </div>
 
-        <div className="mx-auto mt-7 grid max-w-5xl gap-4 sm:mt-8 lg:grid-cols-2 lg:gap-5">
+        <div className="mx-auto mt-6 grid max-w-5xl gap-3.5 sm:mt-7 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
           {trustCards.map((card, index) => {
             const isFeatured = index === 0;
 
             return (
               <article
                 className={[
-                  "group relative overflow-hidden rounded-[1.45rem] border p-5 shadow-[0_18px_46px_rgba(15,46,26,0.08)] transition-[border-color,box-shadow,transform] duration-200 motion-reduce:transition-none sm:p-6",
+                  "group relative flex flex-col overflow-hidden rounded-[1.45rem] border px-5 py-4 shadow-[0_18px_46px_rgba(15,46,26,0.08)] transition-[border-color,box-shadow,transform] duration-200 motion-reduce:transition-none",
                   "md:hover:-translate-y-0.5 md:hover:shadow-[0_24px_58px_rgba(15,46,26,0.12)]",
                   isFeatured
-                    ? "border-fresh/22 bg-[linear-gradient(180deg,#FFFFFF_0%,#F6FBF4_100%)]"
-                    : "border-[#E7DDC8] bg-[#FFFEF8]",
+                    ? "border-fresh/22 bg-[linear-gradient(180deg,#FFFFFF_0%,#F6FBF4_100%)] md:hover:border-fresh/40"
+                    : "border-[#E7DDC8] bg-[#FFFEF8] md:hover:border-[#D9CBA4]",
                 ].join(" ")}
                 key={card.title}
               >
@@ -477,23 +521,23 @@ function TrustSection() {
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-x-4 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(198,146,46,0.34),transparent)]"
                 />
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3.5 sm:gap-4">
                   <span
                     className={[
-                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-200 motion-reduce:transition-none md:group-hover:scale-[1.03]",
+                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-200 motion-reduce:transition-none md:group-hover:scale-[1.02]",
                       isFeatured
-                        ? "border-cta/25 bg-primary text-cta-soft"
-                        : "border-cta/25 bg-[#FFF9EA] text-primary",
+                        ? "border-fresh/40 bg-primary text-cta-soft"
+                        : "border-fresh/35 bg-[#FFF9EA] text-primary",
                     ].join(" ")}
                   >
                     <TrustIcon type={card.icon} />
                   </span>
                   <div className="min-w-0">
                     <h3 className="text-base font-extrabold leading-6 text-text sm:text-lg">{card.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-text-muted">{card.description}</p>
+                    <p className="mt-1 text-sm leading-6 text-text-muted">{card.description}</p>
                   </div>
                 </div>
-                <div className="mt-5">
+                <div className="mt-auto pt-3">
                   <span className="inline-flex rounded-full border border-fresh/14 bg-fresh-soft/70 px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-primary">
                     {card.label}
                   </span>
@@ -523,6 +567,7 @@ export default async function HomePage() {
 
   return (
     <div className="overflow-x-clip bg-background">
+      <JsonLd data={groceryStoreSchema} />
       <section className="border-b border-border bg-hero">
         <div className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-5 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-8 lg:py-14">
           <div className="min-w-0 flex flex-col justify-center">
@@ -716,8 +761,8 @@ export default async function HomePage() {
 
       <StoreLocationSection />
 
-      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1F5A2E_0%,#12391F_55%,#0F2E1A_100%)] p-6 text-white shadow-[0_24px_70px_rgba(15,46,26,0.28)] sm:p-10">
+      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-9 lg:px-8">
+        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1F5A2E_0%,#12391F_55%,#0F2E1A_100%)] px-3 py-5 text-white shadow-[0_24px_70px_rgba(15,46,26,0.28)] sm:p-8 lg:p-9">
           <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cta/15 blur-2xl" aria-hidden="true" />
           <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-fresh/25 blur-2xl" aria-hidden="true" />
           <div className="relative grid gap-6 lg:grid-cols-[1.2fr_auto] lg:items-center">
@@ -730,15 +775,15 @@ export default async function HomePage() {
                 Track orders, save delivery addresses, and keep a wishlist of your favourite staples - all in one place.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row lg:justify-self-end lg:flex-col">
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-cta px-7 text-sm font-extrabold text-white shadow-[0_14px_32px_rgba(198,146,46,0.4)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-cta px-7 text-sm font-extrabold text-white shadow-[0_14px_32px_rgba(198,146,46,0.4)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
                 href="/login?mode=register"
               >
                 Create free account
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 px-7 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/30 px-7 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
                 href="/products?sale=on"
               >
                 Browse weekly offers

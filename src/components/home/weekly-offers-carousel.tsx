@@ -31,7 +31,7 @@ function stockCopy(product: StorefrontProductCard) {
     return `Only ${product.totalStock} left`;
   }
 
-  return "In stock";
+  return "In stock today";
 }
 
 function offerSavings(product: StorefrontProductCard) {
@@ -56,9 +56,8 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
   const { addItem } = useCart();
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
-  const hasSingleSellableVariant = product.sellableVariantCount === 1;
   const hasMultipleDiscountedVariants = product.discountedVariantCount > 1;
-  const canDirectAdd = hasSingleSellableVariant && product.isInStock && product.leadVariantStock > 0;
+  const canDirectAdd = product.sellableVariantCount === 1 && product.isInStock && product.leadVariantStock > 0;
   const savingsCopy = offerSavings(product);
   const discountText = discountCopy(product);
   const productHref = `/products/${product.slug}?variant=${encodeURIComponent(product.leadVariantSku)}`;
@@ -93,19 +92,19 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
 
   return (
     <article
-      className="group flex h-full w-[78vw] max-w-[18rem] shrink-0 snap-start flex-col overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:border-cta/55 hover:shadow-[0_18px_38px_rgba(6,61,22,0.1)] focus-within:border-cta/55 sm:w-[17rem] lg:hover:-translate-y-0.5"
+      className="group flex h-full w-[76vw] max-w-[17.5rem] shrink-0 snap-start flex-col overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:border-cta/55 hover:shadow-[0_18px_38px_rgba(6,61,22,0.1)] focus-within:border-cta/55 sm:w-[17rem] lg:hover:-translate-y-0.5"
       data-weekly-offer-card
     >
       <Link
         aria-label={`View ${product.name}`}
-        className="relative block h-36 bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+        className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
         href={productHref}
         scroll
       >
         {product.imageUrl ? (
           <Image
             alt={product.imageAlt}
-            className="h-full w-full object-contain p-0.5 transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             fill
             sizes="288px"
             src={product.imageUrl}
@@ -114,25 +113,40 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
         ) : (
           <ProductImagePlaceholder compact category={product.category.name} name={product.name} />
         )}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          <span className="rounded-full border border-cta/35 bg-cta-soft px-2.5 py-1 text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-cta-hover shadow-sm">
+        <div className="absolute left-2 top-2 flex max-w-[calc(100%-3.75rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+          <span className="rounded-full border border-cta/35 bg-cta-soft px-2 py-0.5 text-[0.66rem] font-extrabold uppercase tracking-[0.08em] text-cta-hover shadow-sm sm:px-2.5 sm:py-1">
             Weekly offer
           </span>
-          <span className="rounded-full border border-white/70 bg-white/95 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
+          <span className="rounded-full border border-white/70 bg-white/95 px-2 py-0.5 text-[0.66rem] font-bold text-primary shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
             {savingsCopy}
           </span>
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4">
-        <div className="flex min-h-5 items-center justify-between gap-2">
-          <p className="line-clamp-1 text-xs font-bold uppercase tracking-[0.12em] text-fresh">
-            {product.category.name}
-          </p>
-          <p className="shrink-0 text-xs font-bold text-text-muted">{stockCopy(product)}</p>
+      <div className="flex flex-1 flex-col p-3">
+        <div className="flex min-h-6 flex-wrap gap-1.5 overflow-hidden">
+          <span
+            className={[
+              "rounded-full border px-2 py-0.5 text-[0.66rem] font-bold leading-4 sm:text-[0.72rem]",
+              product.isInStock
+                ? "border-fresh bg-fresh-soft text-fresh"
+                : "border-border bg-surface text-text-muted",
+            ].join(" ")}
+          >
+            {stockCopy(product)}
+          </span>
+          {product.variantCount > 1 ? (
+            <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[0.66rem] font-bold leading-4 text-text-muted sm:text-[0.72rem]">
+              {product.variantCount} options
+            </span>
+          ) : null}
         </div>
 
-        <h3 className="mt-2 min-h-12 text-base font-extrabold leading-6 text-primary">
+        <p className="mt-1.5 line-clamp-1 text-[0.68rem] font-extrabold uppercase leading-4 tracking-[0.08em] text-fresh sm:mt-2 sm:text-[0.72rem]">
+          {product.category.name}
+        </p>
+
+        <h3 className="mt-1 min-h-11 text-base font-extrabold leading-6 text-primary">
           <Link
             className="line-clamp-2 rounded-sm transition-colors hover:text-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={productHref}
@@ -142,9 +156,9 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
           </Link>
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-sm font-semibold text-text-muted">{product.variantLabel}</p>
+        <p className="mt-1 line-clamp-1 text-xs font-bold text-text-muted">{product.variantLabel}</p>
 
-        <div className="mt-4">
+        <div className="mt-auto min-h-20 pt-2.5">
           {product.compareAtPrice ? (
             <p className="text-xs font-semibold text-text-muted">
               <span className="mr-1">{hasMultipleDiscountedVariants ? "Was from" : "Was"}</span>{" "}
@@ -165,22 +179,33 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
           <p className="mt-1 text-xs font-bold text-primary">{discountText}</p>
         </div>
 
-        <div className="mt-auto pt-4">
+        <div className="pt-1.5">
           <div className="min-h-5 text-xs font-bold text-primary" aria-live="polite">
             {notice ?? ""}
           </div>
-          {hasSingleSellableVariant ? (
+          {!product.isInStock ? (
             <button
-              className="a1-primary-button mt-2 w-full cursor-pointer px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              disabled={!canDirectAdd}
+              aria-label={`${product.name} is out of stock`}
+              className="mt-1.5 min-h-10 w-full cursor-not-allowed rounded-md bg-surface-muted px-3 py-2 text-sm font-extrabold text-text-muted disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+              disabled
+              type="button"
+            >
+              Out of stock
+            </button>
+          ) : canDirectAdd ? (
+            <button
+              aria-label={`Add ${product.name} to cart`}
+              className="a1-primary-button mt-1.5 w-full cursor-pointer px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
               onClick={addSingleVariant}
               type="button"
             >
-              Add to cart
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">Add to cart</span>
             </button>
           ) : (
             <Link
-              className="a1-primary-button mt-2 w-full px-3 py-2 text-center text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+              aria-label={`Select a pack for ${product.name}`}
+              className="a1-primary-button mt-1.5 w-full px-3 py-2 text-center text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
               href={productHref}
               scroll
             >

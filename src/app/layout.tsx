@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/site-shell";
-import { APP_NAME, BRAND_FAVICON_SRC, BRAND_ICON_SRC } from "@/lib/constants";
+import { APP_NAME, BRAND_FAVICON_SRC, BRAND_ICON_SRC, BRAND_LOGO_SRC } from "@/lib/constants";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,13 +19,40 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
 });
 
+const SITE_DESCRIPTION =
+  "Shop authentic Nepali groceries, Indian pantry essentials, Asian products, fresh vegetables, rice, spices, snacks, frozen items, and weekly offers from A1 Haat Bazar in Salisbury, Adelaide.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
-    default: APP_NAME,
+    default: `${APP_NAME} | Authentic Nepali & Asian Groceries in Salisbury Adelaide`,
     template: `%s | ${APP_NAME}`,
   },
-  description:
-    "Authentic Nepali groceries, Indian and Asian pantry staples, fresh vegetables, frozen items, spices, rice, lentils, snacks, beverages, and weekly grocery offers.",
+  description: SITE_DESCRIPTION,
+  applicationName: APP_NAME,
+  keywords: [
+    "Nepali grocery store Salisbury",
+    "Asian grocery Adelaide",
+    "Indian grocery Salisbury",
+    "fresh vegetables Salisbury",
+    "Nepali groceries Australia",
+    "A1 Haat Bazar",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: `${APP_NAME} | Authentic Nepali & Asian Groceries in Salisbury Adelaide`,
+    description: SITE_DESCRIPTION,
+    locale: "en_AU",
+    url: "/",
+    images: [{ url: BRAND_LOGO_SRC, alt: `${APP_NAME} logo` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} | Authentic Nepali & Asian Groceries in Salisbury Adelaide`,
+    description: SITE_DESCRIPTION,
+    images: [BRAND_LOGO_SRC],
+  },
   icons: {
     icon: [
       { url: BRAND_FAVICON_SRC, sizes: "any" },

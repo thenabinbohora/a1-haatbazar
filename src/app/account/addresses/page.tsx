@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { createAddressAction, deleteAddressAction, updateAddressAction } from "@/app/account/actions";
 import { AccountNav } from "@/components/account/account-nav";
+
+export const metadata: Metadata = {
+  title: "My addresses",
+  description: "Manage your saved delivery addresses.",
+  robots: { index: false },
+};
 import { AdminActionMessage } from "@/components/admin/admin-action-message";
 import { requireCustomer } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";

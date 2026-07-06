@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { AccountNav } from "@/components/account/account-nav";
 import { formatCurrency } from "@/components/product/price";
 import { requireCustomer } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "My orders",
+  description: "Track your A1 Haat Bazar grocery orders.",
+  robots: { index: false },
+};
 
 export default async function AccountOrdersPage() {
   const user = await requireCustomer();

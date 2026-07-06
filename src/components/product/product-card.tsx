@@ -26,7 +26,7 @@ function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "ne
         : "border-border bg-surface text-text-muted";
 
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold leading-4 sm:px-2.5 sm:py-1 sm:text-xs ${toneClass}`}>
+    <span className={`inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[0.66rem] font-bold leading-4 sm:text-[0.72rem] ${toneClass}`}>
       {children}
     </span>
   );
@@ -134,20 +134,17 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
   }
 
   return (
-    <article className="a1-lift group relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+    <article className="a1-lift group relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
       <Link
         aria-label={`View ${product.name}`}
-        className="relative block aspect-square bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+        className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
         href={productHref}
         scroll
       >
         {product.imageUrl ? (
           <Image
             alt={product.imageAlt}
-            className={[
-              "h-full w-full transition-transform duration-300 group-hover:scale-[1.02]",
-              isCompact ? "object-contain p-2.5 sm:p-4" : "object-cover",
-            ].join(" ")}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             fill
             priority={imagePriority}
             sizes={isCompact ? "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" : "(min-width: 1536px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"}
@@ -158,7 +155,7 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
           <ProductImagePlaceholder category={product.category.name} name={product.name} />
         )}
 
-        <div className="absolute left-2 top-2 flex flex-wrap gap-1.5 sm:left-3 sm:top-3 sm:gap-2">
+        <div className="absolute left-2 top-2 flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3 sm:max-w-[calc(100%-4.25rem)] sm:gap-2">
           {product.isOnSale ? <Badge tone="sale">{product.discountPercent}% off</Badge> : null}
           {product.isWeeklyOffer ? <Badge tone="sale">Weekly offer</Badge> : null}
           {product.isBestSeller ? <Badge>Best seller</Badge> : null}
@@ -188,55 +185,50 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
         />
       ) : null}
 
-      <div className={["flex flex-1 flex-col", isCompact ? "p-3 sm:p-3.5" : "p-3 sm:p-4"].join(" ")}>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+      <div className={["flex min-w-0 flex-1 flex-col", isCompact ? "p-3" : "p-3 sm:p-3.5"].join(" ")}>
+        <div className="flex min-h-6 flex-wrap gap-1.5 overflow-hidden sm:min-h-7">
           <Badge tone={product.isInStock ? "fresh" : "neutral"}>
             {stockCopy(product)}
           </Badge>
           {product.variantCount > 1 ? <Badge>{product.variantCount} options</Badge> : null}
         </div>
 
-        <div className={["mt-2 sm:mt-3", isCompact ? "sm:min-h-24" : "sm:min-h-28"].join(" ")}>
-          <p className="line-clamp-1 text-[0.68rem] font-semibold uppercase leading-4 text-fresh sm:text-xs">{product.category.name}</p>
-          <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-text sm:text-base sm:leading-6">
+        <div className="mt-1.5 flex min-w-0 flex-1 flex-col sm:mt-2">
+          <p className="line-clamp-1 text-[0.68rem] font-extrabold uppercase leading-4 tracking-[0.08em] text-fresh sm:text-[0.72rem]">{product.category.name}</p>
+          <h3 className="mt-1 min-h-10 text-sm font-bold leading-5 text-text sm:min-h-12 sm:text-base sm:leading-6">
             <Link
-              className="rounded-sm transition-colors hover:text-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+              className="line-clamp-2 rounded-sm transition-colors hover:text-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
               href={productHref}
               scroll
             >
               {product.name}
             </Link>
           </h3>
-          <p className={["mt-1 hidden text-sm leading-5 text-text-muted sm:block", isCompact ? "line-clamp-1" : "line-clamp-2"].join(" ")}>{product.description}</p>
-        </div>
+          <p className="mt-1 line-clamp-1 text-[0.7rem] font-bold leading-4 text-text-muted sm:mt-1.5 sm:text-xs">
+            {product.variantLabel}
+          </p>
 
-        <div className="mt-3 flex items-end justify-between gap-3 sm:mt-4">
-          <div>
-            <p className="line-clamp-1 text-[0.68rem] font-semibold leading-4 text-text-muted sm:text-xs">{product.variantLabel}</p>
-            <div className="mt-1 flex flex-wrap items-baseline gap-2">
-              <span className={["font-bold tabular-nums text-text", isCompact ? "text-base sm:text-lg" : "text-base sm:text-xl"].join(" ")}>
-                From {formatCurrency(product.startingPrice, product.currency)}
-              </span>
-              {product.compareAtPrice ? (
-                <span className="text-sm font-semibold text-text-muted line-through">
-                  {formatCurrency(product.compareAtPrice, product.currency)}
+          <div className="mt-auto pt-2 sm:pt-2.5">
+            <div className="min-h-10 sm:min-h-11">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className={["font-extrabold tabular-nums text-text", isCompact ? "text-base sm:text-lg" : "text-lg sm:text-xl"].join(" ")}>
+                  From {formatCurrency(product.startingPrice, product.currency)}
                 </span>
-              ) : null}
+                {product.compareAtPrice ? (
+                  <span className="text-xs font-bold text-text-muted line-through sm:text-sm">
+                    {formatCurrency(product.compareAtPrice, product.currency)}
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-[0.9fr_1.1fr] sm:pt-4">
-          <Link
-            className="hidden min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-md border border-border/80 bg-transparent px-3 py-2 text-center text-sm font-bold text-text-muted transition-colors hover:border-primary/30 hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:inline-flex"
-            href={productHref}
-            scroll
-          >
-            {detailLabel}
-          </Link>
+        <div className="flex flex-col gap-1">
           {!product.isInStock ? (
             <button
-              className="min-h-10 min-w-0 cursor-not-allowed whitespace-nowrap rounded-md bg-surface-muted px-2 py-2 text-center text-xs font-extrabold text-text-muted sm:min-h-11 sm:px-3 sm:text-sm"
+              aria-label={`${product.name} is out of stock`}
+              className="min-h-10 w-full min-w-0 cursor-not-allowed overflow-hidden text-ellipsis whitespace-nowrap rounded-md bg-surface-muted px-2 py-2 text-center text-xs font-extrabold text-text-muted sm:min-h-11 sm:px-3 sm:text-sm"
               disabled
               type="button"
             >
@@ -244,7 +236,8 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
             </button>
           ) : canDirectAdd ? (
             <button
-              className="a1-primary-button min-h-10 min-w-0 cursor-pointer whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
+              aria-label={`Add ${product.name} to cart`}
+              className="a1-primary-button min-h-10 w-full min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
               onClick={addSingleVariant}
               ref={addButtonRef}
               type="button"
@@ -254,13 +247,22 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
             </button>
           ) : (
             <Link
-              className="a1-primary-button min-h-10 min-w-0 whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
+              aria-label={`Select a pack for ${product.name}`}
+              className="a1-primary-button min-h-10 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
               href={productHref}
               scroll
             >
               {optionLabel}
             </Link>
           )}
+          <Link
+            aria-label={`View details for ${product.name}`}
+            className="relative mx-auto inline-flex min-h-7 w-fit items-center justify-center whitespace-nowrap rounded-sm px-1 text-center text-[0.72rem] font-bold text-primary/75 transition-colors after:absolute after:bottom-1 after:left-1 after:right-1 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta focus-visible:after:scale-x-100 sm:text-xs"
+            href={productHref}
+            scroll
+          >
+            {detailLabel}
+          </Link>
         </div>
       </div>
     </article>

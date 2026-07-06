@@ -22,12 +22,25 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   if (!category) {
     return {
       title: "Category not found",
+      robots: { index: false },
     };
   }
 
+  const description =
+    category.description ??
+    `Browse ${category.name} groceries and pantry essentials at A1 Haat Bazar in Salisbury, Adelaide.`;
+
   return {
     title: category.name,
-    description: category.description ?? `Browse ${category.name} groceries and pantry essentials.`,
+    description,
+    alternates: {
+      canonical: `/category/${category.slug}`,
+    },
+    openGraph: {
+      title: category.name,
+      description,
+      url: `/category/${category.slug}`,
+    },
   };
 }
 

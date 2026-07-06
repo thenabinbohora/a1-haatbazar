@@ -33,7 +33,7 @@ type FooterProps = {
 export function Footer({ hasMobileTabBar = false }: FooterProps) {
   return (
     <footer className="border-t border-primary-muted bg-[linear-gradient(180deg,#12391F_0%,#0F2E1A_100%)] text-white">
-      <div className="mx-auto grid max-w-7xl gap-7 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] md:gap-8 lg:px-8 lg:py-12">
+      <div className="mx-auto grid max-w-7xl gap-7 px-4 py-7 sm:px-6 sm:py-9 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] md:gap-8 lg:px-8 lg:py-10">
         <div>
           <BrandLogo display="full" variant="dark" />
           <p className="mt-4 max-w-xl text-sm leading-6 text-emerald-50/80">
@@ -53,7 +53,7 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
             {shoppingLinks.map((link) => (
               <li key={link.href}>
                 <Link
-                  className="rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+                  className="inline-flex min-h-8 items-center rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                   href={link.href}
                 >
                   {link.label}
@@ -69,7 +69,7 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
             {supportLinks.map((link) => (
               <li key={link.href}>
                 <Link
-                  className="rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+                  className="inline-flex min-h-8 items-center rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                   href={link.href}
                 >
                   {link.label}
@@ -87,7 +87,7 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
             <p>
               Contact:{" "}
               <a
-                className="font-semibold text-emerald-50 underline decoration-cta/60 underline-offset-4 transition-colors hover:text-white hover:decoration-cta"
+                className="rounded-sm font-semibold text-emerald-50 underline decoration-cta/60 underline-offset-4 transition-colors hover:text-white hover:decoration-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                 href={`mailto:${SUPPORT_EMAIL}`}
               >
                 {SUPPORT_EMAIL}
@@ -101,13 +101,20 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
         <div
           className={[
             "mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-emerald-50/60 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5 lg:px-8",
-            hasMobileTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] xl:pb-5" : "",
+            hasMobileTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+0.75rem)] xl:pb-5" : "",
           ].join(" ")}
         >
           <p>
             &copy; {new Date().getFullYear()} {STORE_CONFIG.storeName}. All rights reserved.
           </p>
-          <p>{STORE_CONFIG.address}</p>
+          <a
+            className="w-fit rounded-sm transition-colors hover:text-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+            href={STORE_CONFIG.directionsUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {STORE_CONFIG.address}
+          </a>
         </div>
       </div>
     </footer>

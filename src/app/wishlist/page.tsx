@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AccountNav } from "@/components/account/account-nav";
 import { WishlistItems, type WishlistItemView } from "@/components/account/wishlist-items";
+
+export const metadata: Metadata = {
+  title: "Wishlist",
+  description: "Your saved A1 Haat Bazar grocery products.",
+  robots: { index: false },
+};
 import { AdminActionMessage } from "@/components/admin/admin-action-message";
 import { customerImageUrl } from "@/lib/customer-images";
 import { customerImageAlt, customerProductName } from "@/lib/display";
