@@ -8,6 +8,7 @@ type ProductGridProps = {
   emptyDescription?: string;
   emptyActionHref?: string;
   emptyActionLabel?: string;
+  priorityImageCount?: number;
   variant?: "standard" | "related";
 };
 
@@ -17,6 +18,7 @@ export function ProductGrid({
   emptyDescription = "Try a different search, category, or filter combination.",
   emptyActionHref,
   emptyActionLabel,
+  priorityImageCount = 2,
   variant = "standard",
 }: ProductGridProps) {
   if (products.length === 0) {
@@ -28,6 +30,7 @@ export function ProductGrid({
           <Link
             className="a1-primary-button mt-4 inline-flex px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={emptyActionHref}
+            prefetch={false}
           >
             {emptyActionLabel}
           </Link>
@@ -46,7 +49,7 @@ export function ProductGrid({
     >
       {products.map((product, index) => (
         <ProductCard
-          imagePriority={variant === "standard" && index < 2}
+          imagePriority={variant === "standard" && index < priorityImageCount}
           key={product.id}
           product={product}
           variant={variant === "related" ? "compact" : "standard"}

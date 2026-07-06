@@ -1,26 +1,10 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { WeeklyOfferActions } from "@/components/home/weekly-offer-actions";
+import { WeeklyOffersEdgeFades, WeeklyOffersScrollControls } from "@/components/home/weekly-offers-scroll-controls";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
 import { formatCurrency } from "@/components/product/price";
 import type { StorefrontProductCard } from "@/lib/storefront";
-import { useCart } from "@/store/cart-store";
-
-function ArrowIcon({ direction }: { direction: "left" | "right" }) {
-  return (
-    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-      <path
-        d={direction === "left" ? "M15 18l-6-6 6-6" : "M9 6l6 6-6 6"}
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.2"
-      />
-    </svg>
-  );
-}
 
 function stockCopy(product: StorefrontProductCard) {
   if (!product.isInStock) {
@@ -53,42 +37,10 @@ function discountCopy(product: StorefrontProductCard) {
 }
 
 function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
-  const { addItem } = useCart();
-  const [notice, setNotice] = useState<string | null>(null);
-  const noticeTimerRef = useRef<number | null>(null);
   const hasMultipleDiscountedVariants = product.discountedVariantCount > 1;
-  const canDirectAdd = product.sellableVariantCount === 1 && product.isInStock && product.leadVariantStock > 0;
   const savingsCopy = offerSavings(product);
   const discountText = discountCopy(product);
   const productHref = `/products/${product.slug}?variant=${encodeURIComponent(product.leadVariantSku)}`;
-
-  useEffect(() => {
-    return () => {
-      if (noticeTimerRef.current) {
-        window.clearTimeout(noticeTimerRef.current);
-      }
-    };
-  }, []);
-
-  function addSingleVariant() {
-    const result = addItem({
-      productId: product.id,
-      variantId: product.leadVariantId,
-      quantity: 1,
-      maxStock: product.leadVariantStock,
-    });
-
-    setNotice(result.wasAdjusted ? "Cart updated to available stock" : "Added to cart");
-
-    if (noticeTimerRef.current) {
-      window.clearTimeout(noticeTimerRef.current);
-    }
-
-    noticeTimerRef.current = window.setTimeout(() => {
-      setNotice(null);
-      noticeTimerRef.current = null;
-    }, 2800);
-  }
 
   return (
     <article
@@ -99,6 +51,7 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
         aria-label={`View ${product.name}`}
         className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
         href={productHref}
+        prefetch={false}
         scroll
       >
         {product.imageUrl ? (
@@ -106,9 +59,8 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
             alt={product.imageAlt}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             fill
-            sizes="288px"
+            sizes="(max-width: 639px) 76vw, 288px"
             src={product.imageUrl}
-            unoptimized
           />
         ) : (
           <ProductImagePlaceholder compact category={product.category.name} name={product.name} />
@@ -150,6 +102,7 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
           <Link
             className="line-clamp-2 rounded-sm transition-colors hover:text-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={productHref}
+            prefetch={false}
             scroll
           >
             {product.name}
@@ -179,94 +132,14 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
           <p className="mt-1 text-xs font-bold text-primary">{discountText}</p>
         </div>
 
-        <div className="pt-1.5">
-          <div className="min-h-5 text-xs font-bold text-primary" aria-live="polite">
-            {notice ?? ""}
-          </div>
-          {!product.isInStock ? (
-            <button
-              aria-label={`${product.name} is out of stock`}
-              className="mt-1.5 min-h-10 w-full cursor-not-allowed rounded-md bg-surface-muted px-3 py-2 text-sm font-extrabold text-text-muted disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              disabled
-              type="button"
-            >
-              Out of stock
-            </button>
-          ) : canDirectAdd ? (
-            <button
-              aria-label={`Add ${product.name} to cart`}
-              className="a1-primary-button mt-1.5 w-full cursor-pointer px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              onClick={addSingleVariant}
-              type="button"
-            >
-              <span className="sm:hidden">Add</span>
-              <span className="hidden sm:inline">Add to cart</span>
-            </button>
-          ) : (
-            <Link
-              aria-label={`Select a pack for ${product.name}`}
-              className="a1-primary-button mt-1.5 w-full px-3 py-2 text-center text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              href={productHref}
-              scroll
-            >
-              Select pack
-            </Link>
-          )}
-        </div>
+        <WeeklyOfferActions product={product} productHref={productHref} />
       </div>
     </article>
   );
 }
 
 export function WeeklyOffersCarousel({ products }: { products: StorefrontProductCard[] }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
-
-  function updateScrollState() {
-    const scroller = scrollerRef.current;
-
-    if (!scroller) {
-      return;
-    }
-
-    const maxScroll = scroller.scrollWidth - scroller.clientWidth;
-
-    setScrollState({
-      canScrollLeft: scroller.scrollLeft > 4,
-      canScrollRight: scroller.scrollLeft < maxScroll - 4,
-    });
-  }
-
-  useEffect(() => {
-    updateScrollState();
-
-    const scroller = scrollerRef.current;
-
-    if (!scroller) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(updateScrollState);
-    resizeObserver.observe(scroller);
-
-    return () => resizeObserver.disconnect();
-  }, [products.length]);
-
-  function scrollByCard(direction: "left" | "right") {
-    const scroller = scrollerRef.current;
-
-    if (!scroller) {
-      return;
-    }
-
-    const card = scroller.querySelector<HTMLElement>("[data-weekly-offer-card]");
-    const distance = card ? card.offsetWidth + 16 : 300;
-
-    scroller.scrollBy({
-      left: direction === "left" ? -distance : distance,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-    });
-  }
+  const scrollerId = "weekly-offers-scroller";
 
   return (
     <section className="border-b border-border bg-[linear-gradient(180deg,#FAF8F1_0%,#F4F1E8_100%)]">
@@ -282,53 +155,20 @@ export function WeeklyOffersCarousel({ products }: { products: StorefrontProduct
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link className="text-sm font-bold text-cta-hover transition-colors hover:text-primary" href="/products?sale=on">
+            <Link className="text-sm font-bold text-cta-hover transition-colors hover:text-primary" href="/products?sale=on" prefetch={false}>
               View all offers
             </Link>
-            <div className="hidden shrink-0 justify-end gap-2 md:flex">
-              <button
-                aria-label="Scroll weekly offers left"
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition-[border-color,box-shadow,color,transform,opacity] duration-200 hover:-translate-y-0.5 hover:border-cta/60 hover:text-primary-muted hover:shadow-md disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-border disabled:hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                disabled={!scrollState.canScrollLeft}
-                onClick={() => scrollByCard("left")}
-                type="button"
-              >
-                <ArrowIcon direction="left" />
-              </button>
-              <button
-                aria-label="Scroll weekly offers right"
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition-[border-color,box-shadow,color,transform,opacity] duration-200 hover:-translate-y-0.5 hover:border-cta/60 hover:text-primary-muted hover:shadow-md disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-border disabled:hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                disabled={!scrollState.canScrollRight}
-                onClick={() => scrollByCard("right")}
-                type="button"
-              >
-                <ArrowIcon direction="right" />
-              </button>
-            </div>
+            <WeeklyOffersScrollControls targetId={scrollerId} />
           </div>
         </div>
 
         {products.length > 0 ? (
           <div className="relative overflow-hidden">
-            <div
-              aria-hidden="true"
-              className={[
-                "pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#FAF8F1] to-transparent transition-opacity duration-200",
-                scrollState.canScrollLeft ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            />
-            <div
-              aria-hidden="true"
-              className={[
-                "pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#F4F1E8] to-transparent transition-opacity duration-200",
-                scrollState.canScrollRight ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            />
+            <WeeklyOffersEdgeFades targetId={scrollerId} />
             <div
               aria-label="Weekly offer products"
               className="a1-no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 py-1"
-              onScroll={updateScrollState}
-              ref={scrollerRef}
+              id={scrollerId}
             >
               {products.map((product) => (
                 <WeeklyOfferCard key={product.id} product={product} />
@@ -342,6 +182,7 @@ export function WeeklyOffersCarousel({ products }: { products: StorefrontProduct
             <Link
               className="a1-primary-button mt-4 inline-flex px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
               href="/products"
+              prefetch={false}
             >
               Browse all groceries
             </Link>

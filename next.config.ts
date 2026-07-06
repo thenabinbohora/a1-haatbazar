@@ -34,6 +34,16 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "45mb",
     },
   },
+  images: {
+    formats: ["image/avif", "image/webp"],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    remotePatterns: [
+      {
+        hostname: "*.supabase.co",
+        protocol: "https",
+      },
+    ],
+  },
   poweredByHeader: false,
   async headers() {
     return [

@@ -57,6 +57,7 @@ export function BrandLogo({ href = "/", variant = "light", compact = false, disp
       aria-label={`${APP_NAME} home`}
       className="group flex w-fit shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
       href={href}
+      prefetch={false}
     >
       {logoDisplay === "full" ? fullLogo : null}
       {logoDisplay === "mark" ? mark : null}

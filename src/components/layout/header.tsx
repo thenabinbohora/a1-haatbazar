@@ -84,6 +84,7 @@ export function Header() {
                     aria-current={isActivePath(pathname, searchParams, item.href) ? "page" : undefined}
                     className={navLinkClass(isActivePath(pathname, searchParams, item.href))}
                     href={item.href}
+                    prefetch={false}
                     scroll
                   >
                     {item.label}

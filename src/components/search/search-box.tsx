@@ -372,8 +372,8 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
       </label>
       <div
         className={[
-          "flex items-center gap-2 rounded-full border border-border bg-surface shadow-sm transition-[border-color,box-shadow] focus-within:border-cta focus-within:shadow-[0_0_0_3px_rgba(198,146,46,0.16)]",
-          isHero ? "min-h-14 pl-5 pr-2" : "min-h-11 pl-4 pr-1.5",
+          "flex items-center rounded-full border border-border bg-surface shadow-sm transition-[border-color,box-shadow] focus-within:border-cta focus-within:shadow-[0_0_0_3px_rgba(198,146,46,0.16)]",
+          isHero ? "min-h-[3.25rem] gap-1.5 pl-4 pr-1.5 sm:min-h-14 sm:gap-2 sm:pl-5 sm:pr-2" : "min-h-11 gap-2 pl-4 pr-1.5",
         ].join(" ")}
       >
         <SearchIcon className={isHero ? "h-5 w-5 shrink-0 text-text-muted" : "h-4 w-4 shrink-0 text-text-muted"} />
@@ -419,11 +419,18 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
           aria-label="Search"
           className={[
             "a1-primary-button shrink-0 cursor-pointer rounded-full",
-            isHero ? "min-h-11 px-6 text-sm" : "h-9 w-9 !min-h-0 px-0",
+            isHero ? "h-11 w-11 !min-h-0 px-0 text-sm sm:w-auto sm:px-6" : "h-9 w-9 !min-h-0 px-0",
           ].join(" ")}
           type="submit"
         >
-          {isHero ? "Search" : <SearchIcon className="h-4 w-4" />}
+          {isHero ? (
+            <>
+              <span className="sr-only sm:not-sr-only">Search</span>
+              <SearchIcon className="h-4 w-4 sm:hidden" />
+            </>
+          ) : (
+            <SearchIcon className="h-4 w-4" />
+          )}
         </button>
       </div>
 

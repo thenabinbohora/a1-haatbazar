@@ -55,6 +55,7 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
                 <Link
                   className="inline-flex min-h-8 items-center rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                   href={link.href}
+                  prefetch={false}
                 >
                   {link.label}
                 </Link>
@@ -71,6 +72,7 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
                 <Link
                   className="inline-flex min-h-8 items-center rounded-sm transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                   href={link.href}
+                  prefetch={false}
                 >
                   {link.label}
                 </Link>

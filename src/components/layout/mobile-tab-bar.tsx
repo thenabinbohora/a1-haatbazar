@@ -130,6 +130,7 @@ export function MobileTabBar() {
               className={tabClass(isActive(tab.href))}
               href={tab.href}
               key={tab.label}
+              prefetch={false}
             >
               <span className={iconWrapClass(isActive(tab.href))}>
                 <TabIcon type={tab.icon as "home" | "shop" | "wishlist" | "account"} />

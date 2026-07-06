@@ -15,7 +15,7 @@ import {
   getPublicProducts,
 } from "@/lib/storefront";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   alternates: {
@@ -60,6 +60,7 @@ function CategoryCard({
     <Link
       className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
       href={`/category/${category.slug}`}
+      prefetch={false}
     >
       <div className="aspect-[4/3] bg-background">
         {category.imageUrl ? (
@@ -68,9 +69,8 @@ function CategoryCard({
               alt={`${category.name} category`}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              sizes="(max-width: 639px) calc(50vw - 22px), (min-width: 1024px) 25vw, 50vw"
               src={category.imageUrl}
-              unoptimized
             />
           </div>
         ) : (
@@ -205,7 +205,8 @@ function HeroVisual() {
         alt="A1 Haat Bazar grocery spread with rice, spices, fresh vegetables, tea, snacks, and momos"
         className="absolute inset-0 h-full w-full object-cover"
         height={1000}
-        priority
+        loading="lazy"
+        sizes="(min-width: 1024px) 44vw, 0px"
         src="/brand/a1-pantry-hero.webp"
         width={1400}
       />
@@ -391,6 +392,7 @@ function SectionHeading({
         <Link
           className="group inline-flex items-center gap-1.5 text-sm font-bold text-cta-hover transition-colors hover:text-primary"
           href={href}
+          prefetch={false}
         >
           {action}
           <svg
@@ -553,10 +555,10 @@ function TrustSection() {
 
 export default async function HomePage() {
   const [categories, featuredProducts, bestSellers, weeklyOffers, freshVegetables, banners] = await Promise.all([
-    getFeaturedCategories(10),
-    getPublicProducts({}, { featured: true, take: 8 }),
-    getPublicProducts({ sort: "popular" }, { bestSeller: true, take: 8 }),
-    getPublicProducts({ inStock: "on", sale: "on", sort: "offers" }, { weeklyOffer: true, take: 12 }),
+    getFeaturedCategories(8),
+    getPublicProducts({}, { featured: true, take: 6 }),
+    getPublicProducts({ sort: "popular" }, { bestSeller: true, take: 6 }),
+    getPublicProducts({ inStock: "on", sale: "on", sort: "offers" }, { weeklyOffer: true, take: 8 }),
     getPublicProducts({}, { categorySlug: "vegetables", take: 4 }),
     getActiveHomeBanners(),
   ]);
@@ -569,12 +571,12 @@ export default async function HomePage() {
     <div className="overflow-x-clip bg-background">
       <JsonLd data={groceryStoreSchema} />
       <section className="border-b border-border bg-hero">
-        <div className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-5 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-8 lg:py-14">
+        <div className="mx-auto grid min-w-0 max-w-7xl gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-8 lg:py-14">
           <div className="min-w-0 flex flex-col justify-center">
             <p className="a1-reveal text-sm font-bold uppercase tracking-[0.14em] text-fresh">
               A1 Haat Bazar Authentic Groceries
             </p>
-            <h1 className="a1-reveal mt-2.5 max-w-4xl text-[1.86rem] font-extrabold leading-[1.12] text-text [animation-delay:80ms] sm:mt-4 sm:text-5xl sm:leading-tight">
+            <h1 className="a1-reveal mt-1.5 max-w-4xl text-[1.68rem] font-extrabold leading-[1.13] text-text [animation-delay:80ms] sm:mt-4 sm:text-5xl sm:leading-tight">
               Authentic Nepali groceries, fresh vegetables, and{" "}
               <span className="relative min-[370px]:whitespace-nowrap">
                 daily essentials
@@ -590,25 +592,26 @@ export default async function HomePage() {
               </span>{" "}
               all in one place.
             </h1>
-            <p className="a1-reveal mt-3 max-w-2xl text-sm leading-6 text-text-muted [animation-delay:160ms] sm:mt-5 sm:text-lg sm:leading-7">
+            <p className="a1-reveal mt-2 max-w-2xl text-sm leading-6 text-text-muted [animation-delay:160ms] sm:mt-5 sm:text-lg sm:leading-7">
               Shop rice, lentils, spices, pickles, snacks, frozen foods, fresh produce, and weekly offers from A1 Haat
               Bazar.
             </p>
 
-            <div className="a1-reveal mt-4 max-w-2xl [animation-delay:240ms] sm:mt-7">
+            <div className="a1-reveal mt-3 max-w-2xl [animation-delay:240ms] sm:mt-7">
               <SearchBox placeholder="Search rice, masala, tea" variant="hero" />
-              <p className="mt-2 text-xs font-semibold text-text-muted">
+              <p className="mt-1.5 text-xs font-semibold text-text-muted sm:mt-2">
                 Popular: basmati rice, momo masala, wai wai, tea, ghee
               </p>
             </div>
 
             {quickCategoryLinks.length ? (
-              <div className="a1-reveal mt-3 grid grid-cols-2 gap-2 [animation-delay:300ms] sm:hidden">
+              <div className="a1-reveal mt-2 grid grid-cols-2 gap-2 [animation-delay:300ms] sm:hidden">
                 {quickCategoryLinks.map((category) => (
                   <Link
-                    className="min-h-10 rounded-full border border-primary/15 bg-white/86 px-3 py-1.5 text-center text-xs font-extrabold text-primary shadow-sm"
+                    className="flex min-h-10 items-center justify-center rounded-full border border-primary/15 bg-white/86 px-3 py-1.5 text-center text-xs font-extrabold leading-4 text-primary shadow-sm"
                     href={`/category/${category.slug}`}
                     key={category.id}
+                    prefetch={false}
                   >
                     {category.name}
                   </Link>
@@ -616,25 +619,26 @@ export default async function HomePage() {
               </div>
             ) : null}
 
-            <div className="a1-reveal mt-4 grid grid-cols-1 gap-2 [animation-delay:360ms] min-[370px]:grid-cols-2 sm:mt-7 sm:flex sm:flex-row sm:gap-3">
-              <Link className="a1-primary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6" href="/products">
+            <div className="a1-reveal mt-3 grid grid-cols-1 gap-2 [animation-delay:360ms] min-[370px]:grid-cols-2 sm:mt-7 sm:flex sm:flex-row sm:gap-3">
+              <Link className="a1-primary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6" href="/products" prefetch={false}>
                 Shop groceries
               </Link>
               <Link
                 className="a1-secondary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6"
                 href="/products?sale=on"
+                prefetch={false}
               >
                 View weekly offers
               </Link>
             </div>
 
-            <div className="a1-reveal relative mt-3 h-24 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_34px_rgba(15,46,26,0.12)] [animation-delay:420ms] sm:hidden">
+            <div className="a1-reveal relative mt-2.5 h-20 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_34px_rgba(15,46,26,0.12)] [animation-delay:420ms] min-[390px]:h-24 sm:hidden">
               <Image
                 alt="Fresh vegetables, spices, rice, tea, snacks, and pantry staples at A1 Haat Bazar"
                 className="h-full w-full object-cover object-[center_46%]"
                 fill
-                priority
-                sizes="100vw"
+                loading="lazy"
+                sizes="(max-width: 639px) calc(100vw - 32px), 0px"
                 src="/brand/a1-pantry-hero.webp"
               />
               <div
@@ -647,7 +651,7 @@ export default async function HomePage() {
               />
               <div className="absolute inset-x-0 bottom-0 p-3 text-white">
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-cta-soft">Fresh stock today</p>
-                <p className="mt-1 max-w-56 text-sm font-bold leading-5">Pickup, local delivery, and weekly grocery offers.</p>
+                <p className="mt-0.5 max-w-56 text-sm font-bold leading-5 min-[390px]:mt-1">Pickup, local delivery, and weekly grocery offers.</p>
               </div>
             </div>
           </div>
@@ -682,6 +686,7 @@ export default async function HomePage() {
           <Link
             className="block rounded-lg border border-cta/30 bg-cta-soft p-5 shadow-sm transition-colors hover:border-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={stripBanner.linkUrl ?? "/products?sale=on"}
+            prefetch={false}
           >
             <p className="text-sm font-bold uppercase text-cta-hover">Store offer</p>
             <h2 className="mt-1 text-2xl font-extrabold text-text">{stripBanner.title}</h2>
@@ -715,12 +720,14 @@ export default async function HomePage() {
                 <Link
                   className="a1-primary-button px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
                   href="/category/vegetables"
+                  prefetch={false}
                 >
                   Shop fresh vegetables
                 </Link>
                 <Link
                   className="a1-secondary-button px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
                   href="/products?freshVegetables=on"
+                  prefetch={false}
                 >
                   View today&apos;s produce
                 </Link>
@@ -735,7 +742,7 @@ export default async function HomePage() {
               href="/category/vegetables"
               title="Fresh vegetables ready for your basket"
             />
-            <ProductGrid emptyTitle="Fresh vegetables coming soon" products={freshVegetables} />
+            <ProductGrid emptyTitle="Fresh vegetables coming soon" priorityImageCount={0} products={freshVegetables} />
           </div>
         </div>
       </section>
@@ -747,13 +754,13 @@ export default async function HomePage() {
           href="/products?sort=popular"
           title="Pantry picks worth a look"
         />
-        <ProductGrid products={featuredProducts.slice(0, 8)} />
+        <ProductGrid priorityImageCount={0} products={featuredProducts} />
       </section>
 
       <section className="bg-background">
         <div className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Best sellers" title="Popular with local shoppers" />
-          <ProductGrid emptyTitle="No best sellers yet" products={bestSellers.slice(0, 8)} />
+          <ProductGrid emptyTitle="No best sellers yet" priorityImageCount={0} products={bestSellers} />
         </div>
       </section>
 
@@ -779,12 +786,14 @@ export default async function HomePage() {
               <Link
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-cta px-7 text-sm font-extrabold text-white shadow-[0_14px_32px_rgba(198,146,46,0.4)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
                 href="/login?mode=register"
+                prefetch={false}
               >
                 Create free account
               </Link>
               <Link
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/30 px-7 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
                 href="/products?sale=on"
+                prefetch={false}
               >
                 Browse weekly offers
               </Link>
