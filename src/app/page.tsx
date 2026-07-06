@@ -257,11 +257,15 @@ function A1PromiseBar() {
 
   return (
     <section aria-label="Store promises" className="bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
-        <div className="a1-no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto overscroll-x-contain px-4 lg:mx-0 lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible lg:px-0">
+      <div className="mx-auto max-w-7xl px-4 py-3.5 sm:px-6 lg:px-8 lg:py-5">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-4">
           {promises.map((promise, index) => (
             <div
-              className="a1-reveal group flex shrink-0 snap-start items-center gap-2.5 rounded-full border border-primary/10 bg-white/80 py-2 pl-2 pr-4 lg:shrink lg:items-start lg:rounded-lg lg:border-transparent lg:bg-transparent lg:py-1.5 lg:pl-0 lg:pr-0"
+              className={[
+                "a1-reveal group flex min-h-11 min-w-0 items-center gap-2 rounded-full border border-primary/10 bg-white/86 py-1.5 pl-1.5 pr-3 shadow-sm",
+                "lg:min-h-0 lg:items-start lg:gap-2.5 lg:rounded-lg lg:border-transparent lg:bg-transparent lg:py-1.5 lg:pl-0 lg:pr-0 lg:shadow-none",
+                index === promises.length - 1 ? "col-span-2 justify-center lg:col-span-1 lg:justify-start" : "",
+              ].join(" ")}
               key={promise.label}
               style={{ animationDelay: `${120 + index * 90}ms` }}
             >
@@ -269,7 +273,7 @@ function A1PromiseBar() {
                 <PromiseIcon type={promise.icon} />
               </span>
               <span className="min-w-0">
-                <span className="block whitespace-nowrap text-sm font-extrabold leading-5 text-primary lg:whitespace-normal">
+                <span className="block truncate text-sm font-extrabold leading-5 text-primary lg:whitespace-normal">
                   {promise.label}
                 </span>
                 <span className="mt-0.5 hidden text-xs font-semibold leading-5 text-text-muted lg:block">
