@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SectionViewAllLink } from "@/components/home/section-view-all-link";
 import { WeeklyOfferActions } from "@/components/home/weekly-offer-actions";
-import { WeeklyOffersEdgeFades, WeeklyOffersScrollControls } from "@/components/home/weekly-offers-scroll-controls";
+import {
+  WeeklyOffersEdgeFades,
+  WeeklyOffersScroller,
+  WeeklyOffersScrollControls,
+} from "@/components/home/weekly-offers-scroll-controls";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
 import { formatCurrency } from "@/components/product/price";
 import type { StorefrontProductCard } from "@/lib/storefront";
@@ -36,7 +41,13 @@ function discountCopy(product: StorefrontProductCard) {
   return `${discountPercent}% off weekly offer`;
 }
 
-function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
+function WeeklyOfferCard({
+  hideOnDesktop,
+  product,
+}: {
+  hideOnDesktop: boolean;
+  product: StorefrontProductCard;
+}) {
   const hasMultipleDiscountedVariants = product.discountedVariantCount > 1;
   const savingsCopy = offerSavings(product);
   const discountText = discountCopy(product);
@@ -44,12 +55,17 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
 
   return (
     <article
-      className="group flex h-full w-[76vw] max-w-[17.5rem] shrink-0 snap-start flex-col overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:border-cta/55 hover:shadow-[0_18px_38px_rgba(6,61,22,0.1)] focus-within:border-cta/55 sm:w-[17rem] lg:hover:-translate-y-0.5"
+      className={[
+        "group flex h-full basis-[clamp(17.5rem,76vw,30rem)] shrink-0 snap-start snap-normal flex-col overflow-hidden rounded-2xl border border-cta/20 bg-surface shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:border-cta/45 hover:shadow-lg focus-within:border-cta/45",
+        "last:mr-[calc(100%_-_clamp(17.5rem,76vw,30rem))] sm:basis-[calc((100%_-_1rem)/2)] sm:last:mr-[calc((100%_+_1rem)/2)]",
+        "lg:basis-auto lg:last:mr-0 motion-safe:lg:hover:-translate-y-0.5 motion-reduce:transition-none",
+        hideOnDesktop ? "lg:hidden" : "",
+      ].join(" ")}
       data-weekly-offer-card
     >
       <Link
         aria-label={`View ${product.name}`}
-        className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+        className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:aspect-[5/4]"
         href={productHref}
         prefetch={false}
         scroll
@@ -57,29 +73,29 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
         {product.imageUrl ? (
           <Image
             alt={product.imageAlt}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none"
             fill
-            sizes="(max-width: 639px) 76vw, 288px"
+            sizes="(max-width: 368px) 280px, (max-width: 631px) 76vw, (max-width: 639px) 480px, (max-width: 1023px) calc((100vw - 4rem) / 2), (max-width: 1279px) 22vw, 284px"
             src={product.imageUrl}
           />
         ) : (
           <ProductImagePlaceholder compact category={product.category.name} name={product.name} />
         )}
-        <div className="absolute left-2 top-2 flex max-w-[calc(100%-3.75rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
-          <span className="rounded-full border border-cta/35 bg-cta-soft px-2 py-0.5 text-[0.66rem] font-extrabold uppercase tracking-[0.08em] text-cta-hover shadow-sm sm:px-2.5 sm:py-1">
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-4rem)] flex-wrap gap-1.5">
+          <span className="rounded-full border border-cta/30 bg-cta-soft px-2.5 py-1 text-xs font-extrabold uppercase tracking-[0.06em] text-cta-hover shadow-sm">
             Weekly offer
           </span>
-          <span className="rounded-full border border-white/70 bg-white/95 px-2 py-0.5 text-[0.66rem] font-bold text-primary shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
+          <span className="rounded-full border border-border bg-surface/95 px-2.5 py-1 text-xs font-extrabold text-primary shadow-sm">
             {savingsCopy}
           </span>
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-3">
-        <div className="flex min-h-6 flex-wrap gap-1.5 overflow-hidden">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <div className="flex min-h-7 flex-wrap gap-1.5 overflow-hidden">
           <span
             className={[
-              "rounded-full border px-2 py-0.5 text-[0.66rem] font-bold leading-4 sm:text-[0.72rem]",
+              "rounded-full border px-2.5 py-1 text-xs font-bold leading-4",
               product.isInStock
                 ? "border-fresh bg-fresh-soft text-fresh"
                 : "border-border bg-surface text-text-muted",
@@ -88,17 +104,17 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
             {stockCopy(product)}
           </span>
           {product.variantCount > 1 ? (
-            <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[0.66rem] font-bold leading-4 text-text-muted sm:text-[0.72rem]">
+            <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-bold leading-4 text-text-muted">
               {product.variantCount} options
             </span>
           ) : null}
         </div>
 
-        <p className="mt-1.5 line-clamp-1 text-[0.68rem] font-extrabold uppercase leading-4 tracking-[0.08em] text-fresh sm:mt-2 sm:text-[0.72rem]">
+        <p className="mt-2.5 hidden line-clamp-1 text-xs font-extrabold uppercase leading-4 tracking-[0.08em] text-fresh sm:block">
           {product.category.name}
         </p>
 
-        <h3 className="mt-1 min-h-11 text-base font-extrabold leading-6 text-primary">
+        <h3 className="mt-2 min-h-10 text-sm font-extrabold leading-5 text-primary sm:mt-1 sm:min-h-12 sm:text-lg sm:leading-6">
           <Link
             className="line-clamp-2 rounded-sm transition-colors hover:text-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={productHref}
@@ -109,27 +125,27 @@ function WeeklyOfferCard({ product }: { product: StorefrontProductCard }) {
           </Link>
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-xs font-bold text-text-muted">{product.variantLabel}</p>
+        <p className="mt-1 line-clamp-1 text-xs font-semibold text-text-muted sm:mt-1.5 sm:text-sm">{product.variantLabel}</p>
 
-        <div className="mt-auto min-h-20 pt-2.5">
+        <div className="mt-auto pt-2 sm:min-h-24 sm:pt-3">
           {product.compareAtPrice ? (
-            <p className="text-xs font-semibold text-text-muted">
+            <p className="text-sm font-semibold text-text-muted">
               <span className="mr-1">{hasMultipleDiscountedVariants ? "Was from" : "Was"}</span>{" "}
               <span className="line-through">
                 {formatCurrency(product.compareAtPrice, product.currency)}
               </span>
             </p>
           ) : null}
-          <p className="mt-1 text-2xl font-extrabold leading-none text-cta-hover">
+          <p className="mt-1.5 text-xl font-extrabold leading-none text-cta-hover sm:text-[1.7rem]">
             {hasMultipleDiscountedVariants ? (
-              <span className="mr-1 text-sm font-bold text-primary">From</span>
+              <span className="mr-1 text-sm font-extrabold text-primary">From</span>
             ) : (
-              <span className="mr-1 text-sm font-bold text-primary">Now</span>
+              <span className="mr-1 text-sm font-extrabold text-primary">Now</span>
             )}
             {" "}
             {formatCurrency(product.startingPrice, product.currency)}
           </p>
-          <p className="mt-1 text-xs font-bold text-primary">{discountText}</p>
+          <p className="mt-1.5 hidden text-sm font-bold text-primary sm:block">{discountText}</p>
         </div>
 
         <WeeklyOfferActions product={product} productHref={productHref} />
@@ -142,52 +158,60 @@ export function WeeklyOffersCarousel({ products }: { products: StorefrontProduct
   const scrollerId = "weekly-offers-scroller";
 
   return (
-    <section className="border-b border-border bg-[linear-gradient(180deg,#FAF8F1_0%,#F4F1E8_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8 lg:py-10">
-        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-fresh">Weekly offers</p>
-            <h2 className="mt-1 text-3xl font-extrabold leading-tight text-text">
-              Deals for your next grocery run
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-              Save on selected pantry staples, fresh picks, and weekly essentials.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link className="text-sm font-bold text-cta-hover transition-colors hover:text-primary" href="/products?sale=on" prefetch={false}>
-              View all offers
-            </Link>
-            <WeeklyOffersScrollControls targetId={scrollerId} />
-          </div>
-        </div>
-
-        {products.length > 0 ? (
-          <div className="relative overflow-hidden">
-            <WeeklyOffersEdgeFades targetId={scrollerId} />
-            <div
-              aria-label="Weekly offer products"
-              className="a1-no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 py-1"
-              id={scrollerId}
-            >
-              {products.map((product) => (
-                <WeeklyOfferCard key={product.id} product={product} />
-              ))}
+    <section aria-labelledby="weekly-offers-heading" className="border-y border-cta/15 bg-cta-soft">
+      <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6">
+          <div className="order-1 mb-4 flex flex-col gap-4 sm:mb-7 md:flex-row md:items-end md:justify-between lg:col-start-1 lg:row-start-1">
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">Weekly offers</p>
+              <h2 className="mt-2 text-3xl font-extrabold leading-tight text-text sm:text-4xl" id="weekly-offers-heading">
+                Deals for your next grocery run
+              </h2>
+              <p className="mt-3 hidden max-w-2xl text-base leading-7 text-text-muted sm:block">
+                Save on selected pantry staples, fresh picks, and weekly essentials.
+              </p>
             </div>
+            {products.length > 0 ? <WeeklyOffersScrollControls targetId={scrollerId} /> : null}
           </div>
-        ) : (
-          <div className="rounded-lg border border-cta/20 bg-white p-6 shadow-sm">
-            <p className="text-lg font-extrabold text-primary">Weekly offers coming soon</p>
-            <p className="mt-2 text-sm leading-6 text-text-muted">Check back soon for new grocery deals.</p>
-            <Link
-              className="a1-primary-button mt-4 inline-flex px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              href="/products"
-              prefetch={false}
-            >
-              Browse all groceries
-            </Link>
-          </div>
-        )}
+
+          {products.length > 0 ? (
+            <div className="order-2 relative -mx-4 min-w-0 overflow-hidden sm:-mx-6 lg:col-span-2 lg:row-start-2 lg:mx-0 lg:overflow-visible">
+              <WeeklyOffersEdgeFades targetId={scrollerId} />
+              <p className="sr-only" id="weekly-offers-instructions">
+                Swipe horizontally or use the arrow keys to browse more weekly offers.
+              </p>
+              <WeeklyOffersScroller
+                className="a1-no-scrollbar flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto overscroll-x-contain scroll-px-4 px-4 pb-1 pt-3 [-webkit-overflow-scrolling:touch] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta sm:gap-4 sm:scroll-px-6 sm:px-6 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:overscroll-auto lg:scroll-px-0 lg:snap-none lg:px-0 lg:py-3 xl:gap-5"
+                describedById="weekly-offers-instructions"
+                targetId={scrollerId}
+              >
+                {products.map((product, index) => (
+                  <WeeklyOfferCard hideOnDesktop={index >= 4} key={product.id} product={product} />
+                ))}
+              </WeeklyOffersScroller>
+            </div>
+          ) : (
+            <div className="order-2 rounded-2xl border border-cta/20 bg-surface p-6 shadow-sm lg:col-span-2 lg:row-start-2">
+              <p className="text-lg font-extrabold text-primary">Weekly offers coming soon</p>
+              <p className="mt-2 text-sm leading-6 text-text-muted">Check back soon for new grocery deals.</p>
+              <Link
+                className="a1-primary-button mt-4 inline-flex px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                href="/products"
+                prefetch={false}
+              >
+                Browse all groceries
+              </Link>
+            </div>
+          )}
+
+          {products.length > 0 ? (
+            <SectionViewAllLink
+              accessibleLabel="View all weekly offers"
+              href="/products?sale=on"
+              label="View all offers"
+            />
+          ) : null}
+        </div>
       </div>
     </section>
   );

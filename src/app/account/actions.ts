@@ -56,7 +56,7 @@ function redirectAddressError(error: unknown): never {
 }
 
 export async function createAddressAction(formData: FormData) {
-  const user = await requireCustomer();
+  const user = await requireCustomer("/account/addresses");
 
   try {
     const input = parseAddressForm(formData);
@@ -93,7 +93,7 @@ export async function createAddressAction(formData: FormData) {
 }
 
 export async function updateAddressAction(formData: FormData) {
-  const user = await requireCustomer();
+  const user = await requireCustomer("/account/addresses");
 
   try {
     const input = parseAddressForm(formData);
@@ -139,7 +139,7 @@ export async function updateAddressAction(formData: FormData) {
 }
 
 export async function deleteAddressAction(formData: FormData) {
-  const user = await requireCustomer();
+  const user = await requireCustomer("/account/addresses");
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
@@ -152,7 +152,7 @@ export async function deleteAddressAction(formData: FormData) {
 }
 
 export async function removeWishlistItemAction(formData: FormData) {
-  const user = await requireCustomer();
+  const user = await requireCustomer("/wishlist");
   const productId = String(formData.get("productId") ?? "");
 
   if (!productId) {

@@ -2,20 +2,28 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { FloatingFeedbackToast } from "@/components/ui/floating-feedback-toast";
 
 type WishlistContextValue = {
+  isAuthenticated: boolean;
   isReady: boolean;
   isSaved: (productId: string) => boolean;
   setSaved: (productId: string, saved: boolean) => void;
+  showSignInPrompt: () => void;
 };
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
-export function WishlistProvider({ children }: { children: ReactNode }) {
+export function WishlistProvider({ children, isAuthenticated }: { children: ReactNode; isAuthenticated: boolean }) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [isReady, setIsReady] = useState(false);
+  const [hasLoadedSavedIds, setHasLoadedSavedIds] = useState(false);
+  const [showAuthNotice, setShowAuthNotice] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadSavedIds() {
@@ -30,7 +38,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         // Guest or offline: hearts simply start unsaved.
       } finally {
         if (!cancelled) {
-          setIsReady(true);
+          setHasLoadedSavedIds(true);
         }
       }
     }
@@ -40,9 +48,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
-  const isSaved = useCallback((productId: string) => savedIds.has(productId), [savedIds]);
+  const isSaved = useCallback((productId: string) => isAuthenticated && savedIds.has(productId), [isAuthenticated, savedIds]);
 
   const setSaved = useCallback((productId: string, saved: boolean) => {
     setSavedIds((current) => {
@@ -58,9 +66,29 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo<WishlistContextValue>(() => ({ isReady, isSaved, setSaved }), [isReady, isSaved, setSaved]);
+  const showSignInPrompt = useCallback(() => setShowAuthNotice(true), []);
+  const isReady = !isAuthenticated || hasLoadedSavedIds;
+  const value = useMemo<WishlistContextValue>(
+    () => ({ isAuthenticated, isReady, isSaved, setSaved, showSignInPrompt }),
+    [isAuthenticated, isReady, isSaved, setSaved, showSignInPrompt],
+  );
 
-  return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
+  return (
+    <WishlistContext.Provider value={value}>
+      {children}
+      {showAuthNotice ? (
+        <FloatingFeedbackToast
+          actionHref={`/login?next=${encodeURIComponent(typeof window === "undefined" ? "/" : `${window.location.pathname}${window.location.search}`)}`}
+          actionLabel="Sign in"
+          duration={5000}
+          message="Sign in to save items to your wishlist."
+          onClose={() => setShowAuthNotice(false)}
+          placement="top"
+          tone="info"
+        />
+      ) : null}
+    </WishlistContext.Provider>
+  );
 }
 
 export function useWishlist() {

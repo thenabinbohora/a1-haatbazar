@@ -27,7 +27,7 @@ function moneyNumber(value: unknown) {
 }
 
 export default async function WishlistPage({ searchParams }: WishlistPageProps) {
-  const user = await requireCustomer();
+  const user = await requireCustomer("/wishlist");
   const params = await searchParams;
   const items = await prisma.wishlist.findMany({
     where: { userId: user.id },
@@ -37,6 +37,7 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
           category: { select: { name: true, slug: true } },
           images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }], take: 1 },
           variants: { where: { status: "ACTIVE" }, orderBy: { price: "asc" }, take: 1 },
+          _count: { select: { variants: { where: { status: "ACTIVE" } } } },
         },
       },
     },
@@ -54,6 +55,7 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
       productId: item.productId,
       productName: customerProductName(item.product.name),
       productSlug: item.product.slug,
+      variantCount: item.product._count.variants,
       variant: variant
         ? {
             currency: variant.currency,
@@ -68,21 +70,24 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
   });
 
   return (
-    <div className="bg-background">
-      <section className="mx-auto max-w-7xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:py-8 lg:px-8">
-        <p className="text-sm font-semibold uppercase text-fresh">Account</p>
-        <h1 className="mt-2 text-3xl font-bold leading-tight text-text sm:text-4xl">Wishlist</h1>
+    <div className="min-h-dvh bg-background">
+      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+        <header className="mb-5 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-7">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-fresh">Your account</p>
+          <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-text sm:text-4xl">Wishlist</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">Keep favourite groceries ready for your next shop.</p>
+        </header>
         <AccountNav />
         <AdminActionMessage error={params?.error} success={params?.success} />
 
         {wishlistItems.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
-            <h2 className="text-2xl font-bold text-text">Your wishlist is empty</h2>
+          <div className="rounded-2xl border border-border bg-surface p-7 text-center shadow-sm sm:p-10">
+            <h2 className="text-2xl font-black text-text">Your wishlist is empty</h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted">
               Save your favourite groceries and find them quickly next time.
             </p>
             <Link
-              className="a1-primary-button mt-5 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+              className="a1-primary-button mt-5 min-h-12 px-5 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:text-sm"
               href="/products"
             >
               Browse groceries

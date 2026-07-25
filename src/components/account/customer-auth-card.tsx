@@ -22,15 +22,15 @@ type CustomerAuthCardProps = {
 };
 
 function inputClass() {
-  return "-mt-2 min-h-11 w-full max-w-full min-w-0 rounded-md border border-border bg-surface px-4 text-text outline-none transition-colors focus:border-cta focus:ring-2 focus:ring-cta/20 sm:min-h-12";
+  return "-mt-2 min-h-12 w-full max-w-full min-w-0 rounded-xl border border-border bg-background px-4 text-base text-text outline-none transition-[border-color,box-shadow,background-color] placeholder:text-text-muted focus:border-cta focus:bg-surface focus:ring-2 focus:ring-cta/20 sm:text-sm";
 }
 
 function noticeClass(tone: LoginNotice["tone"]) {
   return [
-    "rounded-md border font-semibold",
+    "rounded-xl border px-4 py-3 text-sm font-semibold leading-6",
     tone === "error"
-      ? "border-danger/30 bg-danger-soft p-3 text-sm text-danger"
-      : "border-fresh/20 bg-fresh-soft/65 px-3 py-2 text-xs text-primary/80",
+      ? "border-danger/30 bg-danger-soft text-danger"
+      : "border-fresh/25 bg-fresh-soft text-primary",
   ].join(" ");
 }
 
@@ -122,28 +122,26 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
 
   const segmentClass = (isSelected: boolean) =>
     [
-      "min-h-10 min-w-0 cursor-pointer rounded-full px-2 text-sm font-bold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
-      isSelected ? "bg-surface text-primary shadow-[0_2px_10px_rgba(15,46,26,0.12)]" : "text-text-muted hover:text-primary",
+      "min-h-12 min-w-0 cursor-pointer rounded-xl px-2 text-sm font-extrabold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-3",
+      isSelected ? "bg-surface text-primary shadow-sm" : "text-text-muted hover:bg-surface/70 hover:text-primary",
     ].join(" ");
 
   return (
-    <div className="mx-auto w-full max-w-[calc(100vw-2rem)] min-w-0 rounded-lg border border-border bg-surface p-4 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8 lg:max-w-none">
+    <div className="mx-auto w-full max-w-[calc(100vw-2rem)] min-w-0 rounded-2xl border border-border bg-surface p-4 shadow-xl min-[360px]:p-5 sm:p-8 lg:max-w-none lg:p-9">
       {!isForgotMode ? (
-        <div aria-label="Choose sign in or create account" className="mb-5 grid w-full min-w-0 grid-cols-2 gap-1 rounded-full border border-border bg-surface-muted p-1 sm:mb-6" role="tablist">
+        <div aria-label="Choose sign in or create account" className="mb-6 grid w-full min-w-0 grid-cols-2 gap-1.5 rounded-2xl border border-border bg-surface-muted p-1.5" role="group">
           <button
-            aria-selected={!isRegisterMode}
+            aria-pressed={!isRegisterMode}
             className={segmentClass(!isRegisterMode)}
             onClick={() => switchMode("login")}
-            role="tab"
             type="button"
           >
             Sign in
           </button>
           <button
-            aria-selected={isRegisterMode}
+            aria-pressed={isRegisterMode}
             className={segmentClass(isRegisterMode)}
             onClick={() => switchMode("register")}
-            role="tab"
             type="button"
           >
             Create account
@@ -151,13 +149,13 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         </div>
       ) : null}
       <div className="a1-auth-mode-panel min-w-0" key={mode}>
-        <p className="text-sm font-bold uppercase tracking-[0.06em] text-fresh">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-fresh">
           {isForgotMode ? "Password reset" : isRegisterMode ? "New customer" : "Customer login"}
         </p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-text sm:text-3xl">
+        <h2 className="mt-2 text-2xl font-black leading-tight tracking-tight text-text sm:text-3xl">
           {isForgotMode ? "Reset your password" : isRegisterMode ? "Create your account" : "Sign in to your account"}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-text-muted">
+        <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted">
           {isForgotMode
             ? "Enter your account email and we'll send you a secure password reset link."
             : isRegisterMode
@@ -174,7 +172,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
         ) : null}
 
         {isForgotMode ? (
-          <form className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4" onSubmit={handleForgotSubmit}>
+          <form className="mt-6 grid w-full min-w-0 gap-4" onSubmit={handleForgotSubmit}>
             <label className="block" htmlFor="forgot-email">
               <span className="text-sm font-bold text-text">Email</span>
             </label>
@@ -190,7 +188,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               value={forgotEmail}
             />
             <button
-              className="min-h-12 cursor-pointer rounded-md bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-75"
+              className="min-h-12 cursor-pointer rounded-xl bg-primary px-5 text-base font-extrabold text-white shadow-sm transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-75 sm:text-sm"
               disabled={isSendingReset}
               type="submit"
             >
@@ -198,7 +196,7 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             </button>
           </form>
         ) : isRegisterMode ? (
-          <form action={registerAction} className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4">
+          <form action={registerAction} className="mt-6 grid w-full min-w-0 gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="register-name">
               <span className="text-sm font-bold text-text">Full name</span>
@@ -237,13 +235,13 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
               <label className="block" htmlFor="register-password">
                 <span className="text-sm font-bold text-text">Password</span>
               </label>
-              <PasswordInput autoComplete="new-password" id="register-password" name="password" required />
-              <p className="mt-2 text-xs font-semibold text-text-muted">Use at least 8 characters.</p>
+              <PasswordInput ariaDescribedBy="register-password-hint" autoComplete="new-password" id="register-password" name="password" required />
+              <p className="mt-2 text-sm font-semibold text-text-muted" id="register-password-hint">Use at least 8 characters.</p>
             </div>
             <AuthSubmitButton idleLabel="Create account" pendingLabel="Creating account..." />
           </form>
         ) : (
-          <form action={loginAction} className="mt-4 grid w-full min-w-0 gap-3.5 sm:gap-4">
+          <form action={loginAction} className="mt-6 grid w-full min-w-0 gap-4">
             <input name="next" type="hidden" value={next} />
             <label className="block" htmlFor="login-email">
               <span className="text-sm font-bold text-text">Email</span>
@@ -262,12 +260,12 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
             </label>
             <PasswordInput autoComplete="current-password" id="login-password" name="password" required />
             <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex w-fit cursor-pointer items-center gap-2 font-semibold text-text-muted">
-                <input className="h-4 w-4 rounded border-border text-primary focus:ring-cta" name="remember" type="checkbox" />
+              <label className="flex min-h-11 w-fit cursor-pointer items-center gap-2.5 font-semibold text-text-muted">
+                <input className="h-5 w-5 rounded border-border text-primary focus:ring-cta" name="remember" type="checkbox" />
                 Remember me
               </label>
               <button
-                className="w-fit cursor-pointer font-medium text-text-muted underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+                className="inline-flex min-h-11 w-fit cursor-pointer items-center font-medium text-text-muted underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
                 onClick={() => switchMode("forgot")}
                 type="button"
               >
@@ -280,10 +278,10 @@ export function CustomerAuthCard({ initialMode, loginAction, next, notice, regis
       </div>
 
       {isForgotMode ? (
-        <div className="mt-6 border-t border-border pt-5 text-center text-sm text-text-muted">
+        <div className="mt-7 border-t border-border pt-5 text-center text-sm text-text-muted">
           Remembered your password?{" "}
           <button
-            className="cursor-pointer font-semibold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+            className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-primary underline-offset-4 transition-colors hover:text-primary-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
             onClick={() => switchMode("login")}
             type="button"
           >

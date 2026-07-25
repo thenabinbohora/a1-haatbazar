@@ -1,3 +1,5 @@
 import ProductsLoading from "@/app/products/loading";
 
-export default ProductsLoading;
+export default function SearchLoading() {
+  return <ProductsLoading showSearch />;
+}

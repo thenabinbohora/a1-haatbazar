@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { MiniCartDrawer } from "@/components/cart/mini-cart-drawer";
 import { Footer } from "@/components/layout/footer";
@@ -13,27 +13,10 @@ import { WishlistProvider } from "@/store/wishlist-store";
 
 type SiteShellProps = {
   children: ReactNode;
+  isAuthenticated: boolean;
 };
 
-function RouteScrollHandler({ isAdminRoute }: { isAdminRoute: boolean }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const searchKey = searchParams.toString();
-
-  useEffect(() => {
-    if (isAdminRoute || !pathname || window.location.hash) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
-    });
-  }, [isAdminRoute, pathname, searchKey]);
-
-  return null;
-}
-
-export function SiteShell({ children }: SiteShellProps) {
+export function SiteShell({ children, isAuthenticated }: SiteShellProps) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
   const hasTabBar = shouldShowMobileTabBar(pathname ?? null);
@@ -44,21 +27,20 @@ export function SiteShell({ children }: SiteShellProps) {
 
   return (
     <CartProvider>
-      <WishlistProvider>
+      <WishlistProvider isAuthenticated={isAuthenticated}>
         <CartDrawerProvider>
-          <Suspense fallback={null}>
-            <RouteScrollHandler isAdminRoute={Boolean(isAdminRoute)} />
-          </Suspense>
           <a className="skip-link" href="#main-content">
             Skip to content
           </a>
           <Suspense fallback={null}>
             <Header />
           </Suspense>
-          <main className={`flex-1 ${hasTabBar ? "pb-[calc(var(--a1-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] xl:pb-0" : ""}`} id="main-content" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer hasMobileTabBar={hasTabBar} />
+          <div className={hasTabBar ? "flex flex-1 flex-col pb-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)+16px)] xl:pb-0" : "flex flex-1 flex-col"}>
+            <main className="flex-1" id="main-content" tabIndex={-1}>
+              {children}
+            </main>
+            <Footer hasMobileTabBar={hasTabBar} />
+          </div>
           <MiniCartDrawer />
           <Suspense fallback={null}>
             <MobileTabBar />

@@ -114,11 +114,19 @@ export async function requireAdmin() {
   return user;
 }
 
-export async function requireCustomer() {
+function safeCustomerReturnPath(value: string) {
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/admin")) {
+    return "/account";
+  }
+
+  return value;
+}
+
+export async function requireCustomer(returnTo = "/account") {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/login?next=/account");
+    redirect(`/login?next=${encodeURIComponent(safeCustomerReturnPath(returnTo))}`);
   }
 
   if (user.role !== "CUSTOMER" && user.role !== "ADMIN") {

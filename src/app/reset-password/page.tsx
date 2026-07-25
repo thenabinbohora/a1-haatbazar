@@ -30,12 +30,12 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const isValidRecoverySession = Boolean(recoveryUser?.email);
 
   return (
-    <div className="bg-[linear-gradient(135deg,#FAF8F1_0%,#FFFFFF_58%,#EEF7EF_100%)]">
-      <section className="mx-auto grid min-h-[calc(100vh-88px)] max-w-xl place-items-center px-4 py-10 sm:px-6 lg:px-8">
-        <div className="w-full rounded-lg border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
+    <div className="min-h-dvh bg-[linear-gradient(135deg,#FAF8F1_0%,#FFFFFF_58%,#EEF7EF_100%)]">
+      <section className="mx-auto grid max-w-xl px-4 py-5 sm:px-6 sm:py-10 lg:px-8">
+        <div className="w-full rounded-2xl border border-border bg-surface p-5 shadow-[0_16px_42px_rgba(17,17,17,0.07)] sm:p-8">
           <BrandLogo />
           <p className="mt-7 text-sm font-bold uppercase tracking-[0.06em] text-fresh">Secure password reset</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-text">Create a new password</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-text sm:text-3xl">Create a new password</h1>
           <p className="mt-2 text-sm leading-6 text-text-muted">Choose a new password for your A1 Haat Bazar account.</p>
 
           {error ? (

@@ -1,8 +1,10 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { CHECKOUT_COMPLETION_COOKIE_NAME, checkoutCompletionCookieValue } from "@/lib/checkout-completion";
 import { evaluateCoupon, normalizeCouponCode } from "@/lib/coupons";
 import { customerProductName } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
@@ -315,5 +317,21 @@ export async function createCheckoutOrderAction(
     return { formError: "The order could not be placed. Please review your cart and try again." };
   }
 
-  redirect(`/checkout/success?order=${encodeURIComponent(orderNumber)}`);
+  const completionMarker = randomBytes(18).toString("base64url");
+  const cookieStore = await cookies();
+  cookieStore.set(
+    CHECKOUT_COMPLETION_COOKIE_NAME,
+    checkoutCompletionCookieValue(orderNumber, completionMarker),
+    {
+      httpOnly: true,
+      maxAge: 300,
+      path: "/checkout/success",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  );
+
+  redirect(
+    `/checkout/success?order=${encodeURIComponent(orderNumber)}&placed=${encodeURIComponent(completionMarker)}`,
+  );
 }

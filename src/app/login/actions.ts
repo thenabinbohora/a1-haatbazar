@@ -17,21 +17,32 @@ function safeNext(value?: string) {
   return value;
 }
 
+function failedAuthPath(error: string, next: string, mode?: "register") {
+  const params = new URLSearchParams({ error, next: safeNext(next) });
+
+  if (mode) {
+    params.set("mode", mode);
+  }
+
+  return `/login?${params.toString()}`;
+}
+
 export async function customerLoginAction(formData: FormData) {
+  const next = String(formData.get("next") ?? "");
   const parsed = customerLoginSchema.safeParse({
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
-    next: String(formData.get("next") ?? ""),
+    next,
   });
 
   if (!parsed.success) {
-    redirect("/login?error=invalid");
+    redirect(failedAuthPath("invalid", next));
   }
 
   const clientIp = await getClientIp();
 
   if (isRateLimited("customer-login", `${clientIp}:${parsed.data.email}`)) {
-    redirect("/login?error=rate-limited");
+    redirect(failedAuthPath("rate-limited", parsed.data.next ?? ""));
   }
 
   const user = await prisma.user.findUnique({
@@ -41,7 +52,7 @@ export async function customerLoginAction(formData: FormData) {
   const isValidPassword = await verifyPassword(parsed.data.password, user?.passwordHash);
 
   if (!user || !isValidPassword || user.status !== "ACTIVE" || user.role !== "CUSTOMER") {
-    redirect("/login?error=invalid");
+    redirect(failedAuthPath("invalid", parsed.data.next ?? ""));
   }
 
   await createSession(user.id);
@@ -49,20 +60,21 @@ export async function customerLoginAction(formData: FormData) {
 }
 
 export async function customerRegisterAction(formData: FormData) {
+  const next = String(formData.get("next") ?? "");
   const parsed = customerRegisterSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     password: String(formData.get("password") ?? ""),
-    next: String(formData.get("next") ?? ""),
+    next,
   });
 
   if (!parsed.success) {
-    redirect("/login?mode=register&error=validation");
+    redirect(failedAuthPath("validation", next, "register"));
   }
 
   if (isRateLimited("customer-register", await getClientIp())) {
-    redirect("/login?mode=register&error=rate-limited");
+    redirect(failedAuthPath("rate-limited", parsed.data.next ?? "", "register"));
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -71,7 +83,7 @@ export async function customerRegisterAction(formData: FormData) {
   });
 
   if (existingUser) {
-    redirect("/login?mode=register&error=exists");
+    redirect(failedAuthPath("exists", parsed.data.next ?? "", "register"));
   }
 
   try {
@@ -97,10 +109,10 @@ export async function customerRegisterAction(formData: FormData) {
     await createSession(user.id);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      redirect("/login?mode=register&error=exists");
+      redirect(failedAuthPath("exists", parsed.data.next ?? "", "register"));
     }
 
-    redirect("/login?mode=register&error=failed");
+    redirect(failedAuthPath("failed", parsed.data.next ?? "", "register"));
   }
 
   redirect(safeNext(parsed.data.next));

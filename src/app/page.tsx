@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
+import { CategoryCard } from "@/components/category/category-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { APP_NAME, BRAND_LOGO_SRC, SUPPORT_EMAIL } from "@/lib/constants";
 import { absoluteUrl, getSiteUrl } from "@/lib/site";
+import { SectionViewAllLink } from "@/components/home/section-view-all-link";
+import { StoreLocationMap } from "@/components/home/store-location-map";
 import { WeeklyOffersCarousel } from "@/components/home/weekly-offers-carousel";
 import { SearchBox } from "@/components/search/search-box";
 import { ProductGrid } from "@/components/product/product-grid";
 import { STORE_CONFIG } from "@/config/store";
 import {
   getActiveHomeBanners,
-  getFeaturedCategories,
+  getHomeFeaturedCategories,
   getPublicProducts,
 } from "@/lib/storefront";
 
@@ -33,62 +35,25 @@ const groceryStoreSchema = {
   priceRange: "$",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "3/170 Commercial Rd",
-    addressLocality: "Salisbury",
-    addressRegion: "SA",
-    postalCode: "5108",
-    addressCountry: "AU",
+    ...STORE_CONFIG.postalAddress,
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    ...STORE_CONFIG.coordinates,
   },
   openingHoursSpecification: [
     {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "09:00",
-      closes: "19:00",
+      dayOfWeek: STORE_CONFIG.openingHoursSpecification.days,
+      opens: STORE_CONFIG.openingHoursSpecification.opens,
+      closes: STORE_CONFIG.openingHoursSpecification.closes,
     },
   ],
   areaServed: ["Salisbury", "Adelaide", "South Australia"],
   hasMap: STORE_CONFIG.directionsUrl,
 };
 
-function CategoryCard({
-  category,
-}: {
-  category: Awaited<ReturnType<typeof getFeaturedCategories>>[number];
-}) {
-  return (
-    <Link
-      className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-      href={`/category/${category.slug}`}
-      prefetch={false}
-    >
-      <div className="aspect-[4/3] bg-background">
-        {category.imageUrl ? (
-          <div className="relative h-full w-full">
-            <Image
-              alt={`${category.name} category`}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              fill
-              sizes="(max-width: 639px) calc(50vw - 22px), (min-width: 1024px) 25vw, 50vw"
-              src={category.imageUrl}
-            />
-          </div>
-        ) : (
-          <ProductImagePlaceholder category="A1 Haat Bazar" name={category.name} />
-        )}
-      </div>
-      <div className="p-3 sm:p-4">
-        <h3 className="text-sm font-bold text-text sm:text-base">{category.name}</h3>
-        <p className="mt-1 hidden line-clamp-2 text-sm leading-5 text-text-muted sm:block">
-          {category.description ?? "Authentic pantry staples, fresh essentials, and weekly grocery picks."}
-        </p>
-        <p className="mt-1.5 text-xs font-bold text-primary sm:mt-3 sm:text-sm">{category._count.products} products</p>
-      </div>
-    </Link>
-  );
-}
-
-function PromiseIcon({ type }: { type: "leaf" | "basket" | "tag" | "truck" | "wallet" }) {
+function PromiseIcon({ type }: { type: "leaf" | "basket" | "tag" | "truck" }) {
   const paths = {
     leaf: (
       <>
@@ -116,13 +81,6 @@ function PromiseIcon({ type }: { type: "leaf" | "basket" | "tag" | "truck" | "wa
         <path d="M14.2 10.1h3.1l2.9 3v3h-6" />
         <path d="M7.1 19a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z" />
         <path d="M16.9 19a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z" />
-      </>
-    ),
-    wallet: (
-      <>
-        <path d="M4.5 7.5h13.2a1.8 1.8 0 0 1 1.8 1.8v8.2a1.8 1.8 0 0 1-1.8 1.8H5.9a2.4 2.4 0 0 1-2.4-2.4V8.5a2 2 0 0 1 2-2h10" />
-        <path d="M15.2 13.3h4.3" />
-        <path d="M16.8 13.3h.01" />
       </>
     ),
   };
@@ -200,24 +158,22 @@ function LocationIcon({ type }: { type: "pin" | "clock" | "pickup" | "truck" | "
 
 function HeroVisual() {
   return (
-    <div className="a1-reveal relative min-h-[520px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_24px_80px_rgba(15,46,26,0.13)]">
+    <div className="a1-reveal relative hidden h-[360px] overflow-hidden rounded-2xl border border-primary/10 bg-surface shadow-xl shadow-primary/10 md:block lg:h-full lg:min-h-[560px]">
       <Image
         alt="A1 Haat Bazar grocery spread with rice, spices, fresh vegetables, tea, snacks, and momos"
-        className="absolute inset-0 h-full w-full object-cover"
-        height={1000}
-        loading="lazy"
-        sizes="(min-width: 1024px) 44vw, 0px"
+        className="h-full w-full object-cover"
+        fill
+        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 48px), 48vw"
         src="/brand/a1-pantry-hero.webp"
-        width={1400}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(251,244,227,0.98)_0%,rgba(251,244,227,0.78)_42%,rgba(251,244,227,0.12)_100%)]" />
-      <div className="relative z-10 flex min-h-[520px] items-end p-5 sm:p-7">
-        <div className="a1-glass-card max-w-md p-5 sm:p-6">
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-fresh">Local grocery run</p>
-          <h2 className="mt-3 text-3xl font-extrabold leading-tight text-primary sm:text-4xl">
-            Pantry staples, fresh produce, and weekly finds.
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/5 to-transparent lg:bg-gradient-to-r lg:from-primary/30 lg:via-transparent lg:to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 z-10 p-3 sm:p-6 lg:p-7">
+        <div className="max-w-md rounded-xl border border-white/25 bg-surface/95 p-3 shadow-lg backdrop-blur sm:rounded-2xl sm:p-5">
+          <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">A better local grocery run</p>
+          <h2 className="mt-1 text-lg font-extrabold leading-tight text-primary sm:mt-2 sm:text-3xl">
+            From familiar pantry staples to market-fresh produce.
           </h2>
-          <p className="mt-3 text-sm leading-6 text-text-muted">
+          <p className="mt-2 hidden text-sm leading-6 text-text-muted sm:block">
             Browse familiar essentials with clear stock, pickup, delivery, and simple checkout.
           </p>
         </div>
@@ -228,55 +184,48 @@ function HeroVisual() {
 
 function A1PromiseBar() {
   const promises = [
-      {
-        description: "Fresh produce and herbs updated regularly.",
-        icon: "leaf",
-        label: "Fresh daily",
-      },
-      {
-        description: "Pantry staples, spices, snacks, rice, dal, and more.",
-        icon: "basket",
-        label: "Nepali groceries",
-      },
+    {
+      description: "Fresh produce and herbs updated regularly.",
+      icon: "leaf",
+      label: "Fresh daily",
+    },
+    {
+      description: "Pantry staples, spices, snacks, rice, dal, and more.",
+      icon: "basket",
+      label: "Nepali groceries",
+    },
     {
       description: "Save on selected groceries every week.",
       icon: "tag",
       label: "Weekly offers",
     },
-      {
-        description: "Choose local delivery or pickup at checkout.",
-        icon: "truck",
-        label: "Delivery & pickup",
-      },
-      {
-        description: "Cash on delivery or pay at pickup available.",
-        icon: "wallet",
-        label: "Easy payment",
-      },
+    {
+      description: "Choose local delivery or pickup at checkout.",
+      icon: "truck",
+      label: "Delivery & pickup",
+    },
   ] as const;
 
   return (
-    <section aria-label="Store promises" className="bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-3.5 sm:px-6 lg:px-8 lg:py-5">
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-4">
-          {promises.map((promise, index) => (
+    <section aria-label="Store promises" className="border-b border-border bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8 lg:py-5">
+        <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-4">
+          {promises.map((promise) => (
             <div
               className={[
-                "a1-reveal group flex min-h-11 min-w-0 items-center gap-2 rounded-full border border-primary/10 bg-white/86 py-1.5 pl-1.5 pr-3 shadow-sm",
-                "lg:min-h-0 lg:items-start lg:gap-2.5 lg:rounded-lg lg:border-transparent lg:bg-transparent lg:py-1.5 lg:pl-0 lg:pr-0 lg:shadow-none",
-                index === promises.length - 1 ? "col-span-2 justify-center lg:col-span-1 lg:justify-start" : "",
+                "group flex min-h-14 min-w-0 w-full items-center gap-2 rounded-xl border border-primary/10 bg-surface p-2 shadow-sm",
+                "lg:min-h-0 lg:w-auto lg:items-start lg:gap-2.5 lg:border-border lg:px-3 lg:py-3",
               ].join(" ")}
               key={promise.label}
-              style={{ animationDelay: `${120 + index * 90}ms` }}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-[0_5px_12px_rgba(15,46,26,0.16)] transition-[transform,background-color,box-shadow] duration-300 ease-out lg:mt-0.5 lg:group-hover:-translate-y-0.5 lg:group-hover:bg-primary-muted lg:group-hover:shadow-[0_8px_18px_rgba(15,46,26,0.22)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm transition-transform duration-200 ease-out lg:group-hover:-translate-y-0.5 motion-reduce:transition-none">
                 <PromiseIcon type={promise.icon} />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-extrabold leading-5 text-primary lg:whitespace-normal">
+                <span className="block text-xs font-extrabold leading-5 text-primary min-[380px]:text-sm lg:whitespace-normal">
                   {promise.label}
                 </span>
-                <span className="mt-0.5 hidden text-xs font-semibold leading-5 text-text-muted lg:block">
+                <span className="mt-0.5 hidden text-sm leading-5 text-text-muted lg:block">
                   {promise.description}
                 </span>
               </span>
@@ -308,64 +257,49 @@ function StoreLocationSection() {
   ] as const;
 
   return (
-    <section className="border-b border-border bg-[linear-gradient(180deg,#FAF8F1_0%,#F2F6EE_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8 lg:py-12">
+    <section className="bg-hero">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         <SectionHeading
           description="Find us in Salisbury for store pickup, fresh groceries, and weekly essentials."
           eyebrow="Store pickup location"
           title="Visit our store"
         />
-        <div className="a1-section-reveal grid gap-4 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch lg:gap-5">
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-[0_14px_42px_rgba(15,46,26,0.08)] sm:p-5 lg:p-6">
-            <p className="text-sm font-bold uppercase text-fresh">Local Salisbury store</p>
-            <h3 className="mt-2 text-2xl font-extrabold text-primary">{STORE_CONFIG.storeName}</h3>
-            <div className="mt-4 space-y-3.5 lg:mt-5">
+        <div className="a1-section-reveal grid gap-5 md:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.18fr)] md:items-stretch">
+          <div className="flex flex-col rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-7 lg:p-8">
+            <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">Local Salisbury store</p>
+            <h3 className="mt-2 text-2xl font-extrabold text-primary sm:text-3xl">{STORE_CONFIG.storeName}</h3>
+            <div className="mt-5 space-y-4 lg:mt-6">
               {storeDetails.map((detail) => (
-                <div className="flex gap-3" key={detail.label}>
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-fresh/15 bg-fresh-soft text-fresh">
+                <div className="flex gap-3.5" key={detail.label}>
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fresh-soft text-fresh">
                     <LocationIcon type={detail.icon} />
                   </span>
                   <div>
-                    <p className="text-sm font-bold text-text">{detail.label}</p>
+                    <p className="text-sm font-extrabold text-text">{detail.label}</p>
                     {detail.label === "Address" ? (
-                      <address className="mt-0.5 text-sm not-italic leading-6 text-text-muted">{detail.value}</address>
+                      <address className="mt-0.5 text-[0.95rem] not-italic leading-6 text-text-muted">{detail.value}</address>
                     ) : (
-                      <p className="mt-0.5 text-sm leading-6 text-text-muted">{detail.value}</p>
+                      <p className="mt-0.5 text-[0.95rem] leading-6 text-text-muted">{detail.value}</p>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-            <a
-              aria-label={`Get directions to ${STORE_CONFIG.storeName} in Google Maps`}
-              className="a1-primary-button mt-5 w-full gap-2 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:w-auto"
-              href={STORE_CONFIG.directionsUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <LocationIcon type="pin" />
-              Get directions
-            </a>
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_42px_rgba(15,46,26,0.08)]">
-            <div className="flex flex-col">
-              <iframe
-                allowFullScreen
-                className="h-[260px] border-0 sm:h-[300px]"
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-                src={STORE_CONFIG.mapEmbedUrl}
-                title="A1 Haat Bazar location map"
-              />
-              <div className="border-t border-border bg-white/95 px-4 py-3">
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Store location</p>
-                <p className="mt-1 text-sm leading-5 text-text-muted">
-                  If the map does not load, use Get directions to open Google Maps.
-                </p>
-              </div>
+            <div className="mt-auto pt-6">
+              <a
+                aria-label={`Get directions to ${STORE_CONFIG.storeName} in Google Maps`}
+                className="a1-primary-button w-full gap-2 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta lg:w-auto"
+                href={STORE_CONFIG.directionsUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <LocationIcon type="pin" />
+                Get directions
+              </a>
             </div>
           </div>
+
+          <StoreLocationMap />
         </div>
       </div>
     </section>
@@ -376,44 +310,29 @@ function SectionHeading({
   eyebrow,
   title,
   description,
-  href,
-  action,
+  titleId,
 }: {
   eyebrow: string;
   title: string;
   description?: string;
-  href?: string;
-  action?: string;
+  titleId?: string;
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p className="text-sm font-bold uppercase text-fresh">{eyebrow}</p>
-        <h2 className="mt-1 text-3xl font-extrabold leading-tight text-text">{title}</h2>
-        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">{description}</p> : null}
-      </div>
-      {href && action ? (
-        <Link
-          className="group inline-flex items-center gap-1.5 text-sm font-bold text-cta-hover transition-colors hover:text-primary"
-          href={href}
-          prefetch={false}
+    <div className="mb-6 sm:mb-7">
+      <div className="max-w-3xl">
+        <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">{eyebrow}</p>
+        <h2
+          className="mt-2 text-2xl font-extrabold leading-tight text-text sm:text-4xl"
+          id={titleId}
         >
-          {action}
-          <svg
-            aria-hidden="true"
-            className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
-        </Link>
-      ) : null}
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted sm:mt-3 sm:text-base sm:leading-7">
+            {description}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -497,60 +416,44 @@ function TrustSection() {
   ] as const;
 
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_18%_8%,rgba(255,247,230,0.88)_0,rgba(255,247,230,0)_34%),radial-gradient(circle_at_86%_18%,rgba(238,247,239,0.95)_0,rgba(238,247,239,0)_36%),linear-gradient(180deg,#EEF7EF_0%,#F8FBF5_100%)]">
-      <div className="a1-section-reveal relative mx-auto max-w-7xl px-4 pb-7 pt-9 sm:px-6 sm:pb-8 sm:pt-11 lg:px-8 lg:pb-9 lg:pt-12">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-fresh">
-            WHY SHOP WITH A1 HAAT BAZAR?
-          </p>
-          <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight text-text sm:text-3xl lg:text-4xl">
-            A local grocery experience built on trust
-          </h2>
-        </div>
+    <section className="bg-background">
+      <div className="a1-section-reveal mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-6 lg:px-8 lg:py-16">
+        <div className="relative overflow-hidden rounded-2xl bg-primary px-4 py-6 text-white shadow-xl shadow-primary/15 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cta/20 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-fresh/30 blur-3xl" aria-hidden="true" />
+          <div className="relative grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+            <div>
+              <p className="max-w-full text-sm font-extrabold uppercase leading-5 tracking-[0.12em] text-cta-soft">
+                Why shop with A1 Haat Bazar?
+              </p>
+              <h2 className="mt-2 text-2xl font-extrabold leading-tight sm:mt-3 sm:text-4xl">
+                A local grocery experience built around confidence.
+              </h2>
+              <p className="mt-4 hidden max-w-xl text-base leading-7 text-white/75 sm:block">
+                Clear stock, practical fulfilment options, and familiar groceries make every basket easier to plan.
+              </p>
+            </div>
 
-        <div className="mx-auto mt-6 grid max-w-5xl gap-3.5 sm:mt-7 lg:auto-rows-fr lg:grid-cols-2 lg:gap-4">
-          {trustCards.map((card, index) => {
-            const isFeatured = index === 0;
-
-            return (
-              <article
-                className={[
-                  "group relative flex flex-col overflow-hidden rounded-[1.45rem] border px-5 py-4 shadow-[0_18px_46px_rgba(15,46,26,0.08)] transition-[border-color,box-shadow,transform] duration-200 motion-reduce:transition-none",
-                  "md:hover:-translate-y-0.5 md:hover:shadow-[0_24px_58px_rgba(15,46,26,0.12)]",
-                  isFeatured
-                    ? "border-fresh/22 bg-[linear-gradient(180deg,#FFFFFF_0%,#F6FBF4_100%)] md:hover:border-fresh/40"
-                    : "border-[#E7DDC8] bg-[#FFFEF8] md:hover:border-[#D9CBA4]",
-                ].join(" ")}
-                key={card.title}
-              >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-4 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(198,146,46,0.34),transparent)]"
-                />
-                <div className="flex items-start gap-3.5 sm:gap-4">
-                  <span
-                    className={[
-                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-200 motion-reduce:transition-none md:group-hover:scale-[1.02]",
-                      isFeatured
-                        ? "border-fresh/40 bg-primary text-cta-soft"
-                        : "border-fresh/35 bg-[#FFF9EA] text-primary",
-                    ].join(" ")}
-                  >
-                    <TrustIcon type={card.icon} />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="text-base font-extrabold leading-6 text-text sm:text-lg">{card.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-text-muted">{card.description}</p>
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              {trustCards.map((card) => (
+                <article
+                  className="group rounded-2xl border border-white/15 bg-white/10 p-3 transition-colors duration-200 hover:bg-white/15 motion-reduce:transition-none sm:p-5 sm:backdrop-blur-sm"
+                  key={card.title}
+                >
+                  <div className="flex flex-col items-start gap-2.5 sm:flex-row sm:gap-3.5">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cta-soft text-cta-hover shadow-sm sm:h-11 sm:w-11">
+                      <TrustIcon type={card.icon} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="hidden text-sm font-extrabold uppercase tracking-[0.08em] text-cta-soft sm:block">{card.label}</p>
+                      <h3 className="text-sm font-extrabold leading-5 text-white sm:mt-1 sm:text-lg sm:leading-6">{card.title}</h3>
+                      <p className="mt-1 hidden text-sm leading-6 text-white/70 sm:block">{card.description}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-auto pt-3">
-                  <span className="inline-flex rounded-full border border-fresh/14 bg-fresh-soft/70 px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-primary">
-                    {card.label}
-                  </span>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -559,9 +462,9 @@ function TrustSection() {
 
 export default async function HomePage() {
   const [categories, featuredProducts, bestSellers, weeklyOffers, freshVegetables, banners] = await Promise.all([
-    getFeaturedCategories(8),
-    getPublicProducts({}, { featured: true, take: 6 }),
-    getPublicProducts({ sort: "popular" }, { bestSeller: true, take: 6 }),
+    getHomeFeaturedCategories(),
+    getPublicProducts({}, { featured: true, take: 4 }),
+    getPublicProducts({ sort: "popular" }, { bestSeller: true, take: 4 }),
     getPublicProducts({ inStock: "on", sale: "on", sort: "offers" }, { weeklyOffer: true, take: 8 }),
     getPublicProducts({}, { categorySlug: "vegetables", take: 4 }),
     getActiveHomeBanners(),
@@ -569,168 +472,160 @@ export default async function HomePage() {
 
   const stripBanner = banners.find((banner) => banner.placement === "HOME_STRIP");
   const activeWeeklyOffers = weeklyOffers.filter((product) => product.isWeeklyOffer && product.isOnSale);
-  const quickCategoryLinks = categories.slice(0, 4);
 
   return (
     <div className="overflow-x-clip bg-background">
       <JsonLd data={groceryStoreSchema} />
-      <section className="border-b border-border bg-hero">
-        <div className="mx-auto grid min-w-0 max-w-7xl gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-8 lg:py-14">
-          <div className="min-w-0 flex flex-col justify-center">
-            <p className="a1-reveal text-sm font-bold uppercase tracking-[0.14em] text-fresh">
-              A1 Haat Bazar Authentic Groceries
+      <section className="relative overflow-hidden border-b border-border bg-hero">
+        <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-cta-soft/70 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-fresh-soft blur-3xl" aria-hidden="true" />
+        <div className="relative mx-auto grid min-w-0 max-w-7xl gap-4 px-4 py-4 sm:px-6 sm:py-10 md:gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch lg:gap-10 lg:px-8 lg:py-14">
+          <div className="min-w-0 self-center">
+            <p className="a1-reveal text-xs font-extrabold uppercase tracking-[0.13em] text-cta-hover sm:text-sm">
+              Your Salisbury neighbourhood grocer
             </p>
-            <h1 className="a1-reveal mt-1.5 max-w-4xl text-[1.68rem] font-extrabold leading-[1.13] text-text [animation-delay:80ms] sm:mt-4 sm:text-5xl sm:leading-tight">
-              Authentic Nepali groceries, fresh vegetables, and{" "}
-              <span className="relative min-[370px]:whitespace-nowrap">
-                daily essentials
-                <svg
-                  aria-hidden="true"
-                  className="absolute -bottom-1.5 left-0 h-2.5 w-full text-cta"
-                  fill="none"
-                  preserveAspectRatio="none"
-                  viewBox="0 0 120 10"
-                >
-                  <path d="M2 8c30-6 86-6 116-2" stroke="currentColor" strokeLinecap="round" strokeWidth="3.4" />
-                </svg>
-              </span>{" "}
-              all in one place.
+            <h1 className="a1-reveal mt-2 max-w-3xl text-[1.9rem] font-extrabold leading-[1.08] text-text [animation-delay:80ms] sm:mt-4 sm:text-5xl sm:leading-[1.08] xl:text-[3.6rem]">
+              <span className="md:hidden">Authentic groceries, ready when you are.</span>
+              <span className="hidden md:inline">Authentic Nepali groceries and fresh everyday essentials, all in one basket.</span>
             </h1>
-            <p className="a1-reveal mt-2 max-w-2xl text-sm leading-6 text-text-muted [animation-delay:160ms] sm:mt-5 sm:text-lg sm:leading-7">
-              Shop rice, lentils, spices, pickles, snacks, frozen foods, fresh produce, and weekly offers from A1 Haat
-              Bazar.
+            <p className="a1-reveal mt-3 hidden max-w-2xl text-base leading-7 text-text-muted [animation-delay:160ms] md:block md:text-lg md:leading-8">
+              Fill your pantry with rice, dal, spices, snacks, frozen favourites, fresh produce, and weekly offers from a local store you know.
             </p>
 
-            <div className="a1-reveal mt-3 max-w-2xl [animation-delay:240ms] sm:mt-7">
+            <div className="a1-reveal mt-5 hidden max-w-2xl [animation-delay:240ms] md:block md:mt-7">
               <SearchBox placeholder="Search rice, masala, tea" variant="hero" />
-              <p className="mt-1.5 text-xs font-semibold text-text-muted sm:mt-2">
-                Popular: basmati rice, momo masala, wai wai, tea, ghee
-              </p>
             </div>
 
-            {quickCategoryLinks.length ? (
-              <div className="a1-reveal mt-2 grid grid-cols-2 gap-2 [animation-delay:300ms] sm:hidden">
-                {quickCategoryLinks.map((category) => (
+            <nav
+              aria-label="Popular grocery searches"
+              className="a1-reveal mt-2 flex max-w-2xl flex-wrap items-center gap-y-0 text-[13px] leading-6 text-text-muted [animation-delay:280ms] md:mt-1 md:text-sm"
+            >
+              <span className="mr-1 font-bold">Popular:</span>
+              {["Basmati rice", "Momo masala", "Wai Wai", "Tea"].map((term, index) => (
+                <span className="inline-flex items-center" key={term}>
+                  {index > 0 ? <span aria-hidden="true" className="mx-1.5 text-text-muted/65">&middot;</span> : null}
                   <Link
-                    className="flex min-h-10 items-center justify-center rounded-full border border-primary/15 bg-white/86 px-3 py-1.5 text-center text-xs font-extrabold leading-4 text-primary shadow-sm"
-                    href={`/category/${category.slug}`}
-                    key={category.id}
+                    aria-label={`Search groceries for ${term}`}
+                    className="inline-flex min-h-9 items-center rounded-sm py-1 font-semibold text-primary/85 decoration-primary/35 underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cta"
+                    href={`/search?q=${encodeURIComponent(term)}`}
                     prefetch={false}
                   >
-                    {category.name}
+                    {term}
                   </Link>
-                ))}
-              </div>
-            ) : null}
+                </span>
+              ))}
+            </nav>
 
-            <div className="a1-reveal mt-3 grid grid-cols-1 gap-2 [animation-delay:360ms] min-[370px]:grid-cols-2 sm:mt-7 sm:flex sm:flex-row sm:gap-3">
-              <Link className="a1-primary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6" href="/products" prefetch={false}>
+            <div className="mt-2 grid grid-cols-2 gap-2.5 sm:flex sm:flex-row sm:gap-3 md:mt-5">
+              <Link className="a1-primary-button min-h-12 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-7" href="/products" prefetch={false}>
                 Shop groceries
               </Link>
               <Link
-                className="a1-secondary-button px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-6"
+                className="a1-secondary-button min-h-12 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-7"
                 href="/products?sale=on"
                 prefetch={false}
               >
-                View weekly offers
+                <span className="md:hidden">Weekly offers</span>
+                <span className="hidden md:inline">See weekly offers</span>
               </Link>
             </div>
 
-            <div className="a1-reveal relative mt-2.5 h-20 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_14px_34px_rgba(15,46,26,0.12)] [animation-delay:420ms] min-[390px]:h-24 sm:hidden">
-              <Image
-                alt="Fresh vegetables, spices, rice, tea, snacks, and pantry staples at A1 Haat Bazar"
-                className="h-full w-full object-cover object-[center_46%]"
-                fill
-                loading="lazy"
-                sizes="(max-width: 639px) calc(100vw - 32px), 0px"
-                src="/brand/a1-pantry-hero.webp"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(0deg,rgba(15,46,26,0.76)_0%,rgba(15,46,26,0.46)_52%,rgba(15,46,26,0)_100%)]"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute bottom-0 left-0 h-full w-3/4 bg-[linear-gradient(90deg,rgba(15,46,26,0.42)_0%,rgba(15,46,26,0)_100%)]"
-              />
-              <div className="absolute inset-x-0 bottom-0 p-3 text-white">
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-cta-soft">Fresh stock today</p>
-                <p className="mt-0.5 max-w-56 text-sm font-bold leading-5 min-[390px]:mt-1">Pickup, local delivery, and weekly grocery offers.</p>
-              </div>
+            <div className="mt-4 hidden flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-text-muted md:flex md:mt-6">
+              <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-fresh" />{STORE_CONFIG.openingHours}</span>
+              <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-cta" />Free store pickup</span>
             </div>
           </div>
 
-          <div className="hidden lg:block">
-            <HeroVisual />
-          </div>
+          <HeroVisual />
         </div>
       </section>
 
       <A1PromiseBar />
 
-      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeading
-          action="Browse all"
-          description="Choose from pantry staples, spices, fresh vegetables, frozen favourites, snacks, drinks, and more."
-          eyebrow="Shop by category"
-          href="/products"
-          title="Find what you need quickly"
-        />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-          {categories.map((category) => (
-            <CategoryCard category={category} key={category.id} />
-          ))}
+      <section aria-labelledby="home-category-heading" className="a1-section-reveal mx-auto max-w-7xl px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-14 lg:px-8 lg:py-16">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6">
+          <div className="order-1 lg:col-start-1 lg:row-start-1">
+            <SectionHeading
+              description="Choose from pantry staples, spices, fresh vegetables, frozen favourites, snacks, drinks, and more."
+              eyebrow="Shop by category"
+              title="Start with the aisle you know"
+              titleId="home-category-heading"
+            />
+          </div>
+          <div className="order-2 grid min-w-0 auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:col-span-2 lg:row-start-2">
+            {categories.map((category) => (
+              <CategoryCard
+                category={category}
+                imageSizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 292px"
+                key={category.id}
+              />
+            ))}
+          </div>
+          <SectionViewAllLink
+            accessibleLabel="View all grocery categories"
+            href="/categories"
+            label="View all categories"
+          />
         </div>
       </section>
 
       <WeeklyOffersCarousel products={activeWeeklyOffers} />
 
       {stripBanner ? (
-        <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8">
           <Link
-            className="block rounded-lg border border-cta/30 bg-cta-soft p-5 shadow-sm transition-colors hover:border-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            className="group flex flex-col gap-4 rounded-2xl border border-cta/25 bg-cta-soft p-5 shadow-sm transition-[border-color,box-shadow] hover:border-cta/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:flex-row sm:items-center sm:justify-between sm:p-6"
             href={stripBanner.linkUrl ?? "/products?sale=on"}
             prefetch={false}
           >
-            <p className="text-sm font-bold uppercase text-cta-hover">Store offer</p>
-            <h2 className="mt-1 text-2xl font-extrabold text-text">{stripBanner.title}</h2>
-            {stripBanner.subtitle ? <p className="mt-2 text-sm text-text-muted">{stripBanner.subtitle}</p> : null}
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">Store offer</p>
+              <h2 className="mt-1.5 text-2xl font-extrabold text-text sm:text-3xl">{stripBanner.title}</h2>
+              {stripBanner.subtitle ? <p className="mt-2 text-base text-text-muted">{stripBanner.subtitle}</p> : null}
+            </div>
+            <span className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-sm font-extrabold text-white transition-colors group-hover:bg-primary-muted">
+              Explore offer
+              <svg aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            </span>
           </Link>
         </section>
       ) : null}
 
-      <section className="bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="a1-section-reveal relative min-h-[440px] overflow-hidden rounded-lg border border-border bg-surface shadow-[0_20px_70px_rgba(15,46,26,0.11)]">
+      <section className="bg-surface-muted">
+        <div className="mx-auto max-w-7xl px-4 pb-4 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:py-16">
+          <div className="a1-section-reveal relative min-h-[280px] overflow-hidden rounded-2xl border border-primary/10 bg-primary shadow-xl shadow-primary/10 sm:min-h-[500px]">
             <Image
               alt="Fresh vegetables and herbs for curries, dal, momo nights, and everyday meals"
-              className="absolute inset-0 h-full w-full object-cover"
-              height={900}
+              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1279px) calc(100vw - 48px), 1216px"
               src="/brand/a1-fresh-vegetables.webp"
-              width={1200}
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.75)_42%,rgba(255,255,255,0.05)_100%)]" />
-            <div className="relative z-10 flex min-h-[440px] flex-col justify-between p-6 sm:p-8 lg:max-w-[58%]">
-              <div className="max-w-md">
-                <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-fresh">Fresh vegetables daily</p>
-                <h2 className="mt-3 text-3xl font-extrabold leading-tight text-primary sm:text-4xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary/10" />
+            <div className="relative z-10 flex min-h-[280px] flex-col justify-between p-5 text-white sm:min-h-[500px] sm:p-8 lg:max-w-[60%] lg:p-10">
+              <div className="max-w-xl">
+                <p className="text-sm font-extrabold uppercase tracking-[0.13em] text-cta-soft">Fresh vegetables daily</p>
+                <h2 className="mt-2 text-2xl font-extrabold leading-tight sm:mt-3 sm:text-5xl">
                   Fresh produce for curries, dal, momo nights, and everyday meals.
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-text-muted">
+                <p className="mt-4 hidden max-w-lg text-base leading-7 text-white/75 sm:block">
                   Availability changes with fresh stock. Choose delivery or free store pickup at checkout.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  className="a1-primary-button px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                  className="a1-fresh-banner-primary inline-flex min-h-12 items-center justify-center rounded-xl px-5 text-sm"
                   href="/category/vegetables"
                   prefetch={false}
                 >
                   Shop fresh vegetables
                 </Link>
                 <Link
-                  className="a1-secondary-button px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                  href="/products?freshVegetables=on"
+                  className="a1-fresh-banner-secondary hidden min-h-12 items-center justify-center rounded-xl border px-5 text-sm backdrop-blur-sm sm:inline-flex"
+                  href="/products?freshVegetables=on&inStock=on"
                   prefetch={false}
                 >
                   View today&apos;s produce
@@ -738,33 +633,74 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          <div className="mt-8">
-            <SectionHeading
-              action="Shop fresh"
-              description="Compact weekly produce picks with clear pack sizes, stock, and easy product details."
-              eyebrow="Today's fresh picks"
-              href="/category/vegetables"
-              title="Fresh vegetables ready for your basket"
-            />
-            <ProductGrid emptyTitle="Fresh vegetables coming soon" priorityImageCount={0} products={freshVegetables} />
+          <div className="mt-10">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6">
+              <div className="order-1 lg:col-start-1 lg:row-start-1">
+                <SectionHeading
+                  description="Browse current produce picks with clear pack sizes, stock, and easy product details."
+                  eyebrow="Today's fresh picks"
+                  title="Fresh vegetables ready for your basket"
+                />
+              </div>
+              <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
+                <ProductGrid emptyTitle="Fresh vegetables coming soon" priorityImageCount={0} products={freshVegetables} variant="compactGrid" />
+              </div>
+              <SectionViewAllLink
+                accessibleLabel="View all fresh vegetables"
+                href="/category/vegetables"
+                label="View all vegetables"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeading
-          action="Shop featured"
-          eyebrow="Featured products"
-          href="/products?sort=popular"
-          title="Pantry picks worth a look"
-        />
-        <ProductGrid priorityImageCount={0} products={featuredProducts} />
+      <section className="bg-background">
+        <div className="a1-section-reveal mx-auto max-w-7xl px-4 pb-4 pt-6 sm:px-6 sm:pb-4 sm:pt-6 lg:px-8 lg:py-16">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6">
+            <div className="order-1 lg:col-start-1 lg:row-start-1">
+              <SectionHeading
+                description="A rotating edit of pantry staples, comforting favourites, and useful finds for the week ahead."
+                eyebrow="Featured products"
+                title="Pantry picks worth a look"
+              />
+            </div>
+            <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
+              <ProductGrid priorityImageCount={0} products={featuredProducts} variant="featuredGrid" />
+            </div>
+            <SectionViewAllLink
+              accessibleLabel="View all featured products"
+              href="/products?sort=popular"
+              label="View all featured products"
+            />
+          </div>
+        </div>
       </section>
 
-      <section className="bg-background">
-        <div className="a1-section-reveal mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Best sellers" title="Popular with local shoppers" />
-          <ProductGrid emptyTitle="No best sellers yet" priorityImageCount={0} products={bestSellers} />
+      <section className="border-y border-border bg-surface">
+        <div className="a1-section-reveal mx-auto max-w-7xl px-4 pb-4 pt-6 sm:px-6 sm:pb-4 sm:pt-6 lg:px-8 lg:py-16">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6">
+            <div className="order-1 lg:col-start-1 lg:row-start-1">
+              <SectionHeading
+                description="Reliable staples and familiar favourites that regularly make it into local baskets."
+                eyebrow="Best sellers"
+                title="Popular with local shoppers"
+              />
+            </div>
+            <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
+              <ProductGrid
+                emptyTitle="No best sellers yet"
+                priorityImageCount={0}
+                products={bestSellers}
+                variant="bestSellersGrid"
+              />
+            </div>
+            <SectionViewAllLink
+              accessibleLabel="View all best sellers"
+              href="/products?sort=popular"
+              label="View all best sellers"
+            />
+          </div>
         </div>
       </section>
 
@@ -772,34 +708,39 @@ export default async function HomePage() {
 
       <StoreLocationSection />
 
-      <section className="a1-section-reveal mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-9 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1F5A2E_0%,#12391F_55%,#0F2E1A_100%)] px-3 py-5 text-white shadow-[0_24px_70px_rgba(15,46,26,0.28)] sm:p-8 lg:p-9">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cta/15 blur-2xl" aria-hidden="true" />
-          <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-fresh/25 blur-2xl" aria-hidden="true" />
-          <div className="relative grid gap-6 lg:grid-cols-[1.2fr_auto] lg:items-center">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+        <div className="relative overflow-clip rounded-2xl bg-primary px-5 py-6 text-white shadow-xl shadow-primary/15 sm:p-8 lg:p-10">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cta/20 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-fresh/30 blur-3xl" aria-hidden="true" />
+          <div className="relative grid gap-5 lg:grid-cols-[1.2fr_auto] lg:items-center">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-cta-soft">Shop faster next time</p>
-              <h2 className="mt-3 max-w-xl text-3xl font-extrabold leading-tight sm:text-4xl">
+              <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-soft">Shop faster next time</p>
+              <h2 className="mt-2 max-w-xl text-2xl font-extrabold leading-tight sm:mt-3 sm:text-4xl">
                 Create a free account and check out in seconds.
               </h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-50/85">
-                Track orders, save delivery addresses, and keep a wishlist of your favourite staples - all in one place.
+              <p className="mt-3 max-w-xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7">
+                Save your delivery details, track orders, and keep your favourites in one place.
               </p>
             </div>
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row lg:justify-self-end lg:flex-col">
+            <div className="w-full lg:w-auto lg:justify-self-end">
               <Link
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-cta px-7 text-sm font-extrabold text-white shadow-[0_14px_32px_rgba(198,146,46,0.4)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
-                href="/login?mode=register"
+                className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#E6CF9B] bg-[#FBF4E3] px-6 text-sm font-bold !text-[#174A27] shadow-[0_10px_24px_rgba(4,26,16,0.18)] transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-[#D7B76F] hover:bg-[#F4E7CA] hover:shadow-[0_14px_28px_rgba(4,26,16,0.22)] active:translate-y-0 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#F1C27D] motion-reduce:transform-none motion-reduce:transition-none sm:w-auto lg:min-w-[220px]"
+                href="/login?mode=register&next=%2F"
                 prefetch={false}
               >
-                Create free account
-              </Link>
-              <Link
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/30 px-7 text-sm font-extrabold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto lg:w-full"
-                href="/products?sale=on"
-                prefetch={false}
-              >
-                Browse weekly offers
+                <span>Create free account</span>
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M5 12h14m-6-6 6 6-6 6" />
+                </svg>
               </Link>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { StorefrontProductDetail } from "@/lib/storefront";
 import { ProductImagePlaceholder } from "@/components/brand/product-image-placeholder";
@@ -10,6 +10,7 @@ import { formatCurrency } from "@/components/product/price";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useCart } from "@/store/cart-store";
 import { useCartDrawer } from "@/store/cart-drawer-store";
+import { useWishlist } from "@/store/wishlist-store";
 
 type ProductDetailViewProps = {
   initialVariant?: string;
@@ -75,19 +76,6 @@ function Pill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neu
   return <span className={`rounded-full border px-3 py-1 text-xs font-extrabold ${className}`}>{children}</span>;
 }
 
-function CompactTrustItem({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 text-xs font-bold leading-5 text-text">
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fresh-soft text-fresh" aria-hidden="true">
-        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" viewBox="0 0 24 24">
-          <path d="m5 12 4 4L19 6" />
-        </svg>
-      </span>
-      <span>{children}</span>
-    </div>
-  );
-}
-
 function DetailSection({
   id,
   title,
@@ -102,11 +90,11 @@ function DetailSection({
   onToggle: (id: string) => void;
 }) {
   return (
-    <article className="rounded-lg border border-border bg-surface shadow-sm">
+    <article className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_34px_rgba(18,60,46,0.05)]">
       <button
         aria-controls={`${id}-panel`}
         aria-expanded={isOpen}
-        className="flex min-h-14 w-full cursor-pointer items-center justify-between gap-4 px-4 text-left text-base font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+        className="flex min-h-16 w-full cursor-pointer items-center justify-between gap-4 px-5 text-left text-base font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta"
         onClick={() => onToggle(id)}
         type="button"
       >
@@ -118,7 +106,7 @@ function DetailSection({
         </span>
       </button>
       {isOpen ? (
-        <div className="border-t border-border px-4 py-3 text-[0.95rem] leading-6 text-text-muted" id={`${id}-panel`}>
+        <div className="border-t border-border px-5 py-4 text-[0.95rem] leading-7 text-text-muted" id={`${id}-panel`}>
           {children}
         </div>
       ) : null}
@@ -129,31 +117,40 @@ function DetailSection({
 export function ProductDetailView({ initialVariant, product }: ProductDetailViewProps) {
   const { addItem } = useCart();
   const { open: openCartDrawer } = useCartDrawer();
-  const firstSaleVariant =
-    product.variants.find((variant) => variant.stock > 0 && isOfferVariant(product, variant)) ??
-    product.variants.find((variant) => isOfferVariant(product, variant));
+  const { isSaved, setSaved } = useWishlist();
+  const productIsSaved = isSaved(product.id);
+  const firstSellableSaleVariant = product.variants.find(
+    (variant) => variant.isAvailable && variant.stock > 0 && isOfferVariant(product, variant),
+  );
+  const firstSellableVariant = product.variants.find((variant) => variant.isAvailable && variant.stock > 0);
   const initialSelectedVariant =
     product.variants.find(
       (variant) =>
+        variant.isAvailable &&
         variant.stock > 0 &&
         initialVariant &&
         (variant.id === initialVariant || variant.sku.toLowerCase() === initialVariant.toLowerCase()),
     ) ??
-    firstSaleVariant ??
-    product.variants.find((variant) => variant.stock > 0) ??
+    firstSellableSaleVariant ??
+    firstSellableVariant ??
+    product.variants.find((variant) => isOfferVariant(product, variant)) ??
     product.variants[0];
   const [selectedVariantId, setSelectedVariantId] = useState(initialSelectedVariant?.id ?? "");
   const [selectedGalleryKey, setSelectedGalleryKey] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<"error" | "success">("success");
   const [hasAddedToCart, setHasAddedToCart] = useState(false);
+  const [isWishlistPending, setIsWishlistPending] = useState(false);
+  const [showMobileBuyBar, setShowMobileBuyBar] = useState(true);
+  const productDetailRef = useRef<HTMLDivElement | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(["details"]));
   const selectedVariant = product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0];
   const price = effectivePrice(selectedVariant);
   const hasSale = selectedVariant.salePrice !== null && selectedVariant.salePrice !== undefined && selectedVariant.salePrice < selectedVariant.price;
   const selectedVariantIsOffer = isOfferVariant(product, selectedVariant);
   const selectedVariantOfferLabel = product.isWeeklyOffer ? "Weekly offer" : "Sale price";
-  const canAddToCart = selectedVariant.stock > 0;
+  const canAddToCart = selectedVariant.isAvailable && selectedVariant.stock > 0;
   const selectedQuantity = Math.min(Math.max(quantity, 1), Math.max(selectedVariant.stock, 1));
   const isFreshVegetable = product.category.slug === "vegetables" || /fresh|vegetable/i.test(product.category.name);
 
@@ -203,6 +200,21 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  useEffect(() => {
+    const node = productDetailRef.current;
+
+    if (!node || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowMobileBuyBar(entry.isIntersecting);
+    });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   function selectVariant(variantId: string) {
     const variant = product.variants.find((item) => item.id === variantId);
     const variantImage = variant?.imageUrl ? gallery.find((image) => image.url === variant.imageUrl) : null;
@@ -210,6 +222,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
     setSelectedGalleryKey(variantImage?.key ?? null);
     setQuantity(1);
     setNotice(null);
+    setNoticeTone("success");
     setHasAddedToCart(false);
   }
 
@@ -235,6 +248,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
   function addSelectedVariantToCart() {
     if (!canAddToCart) {
       setNotice("This selected size or pack is out of stock.");
+      setNoticeTone("error");
       return;
     }
 
@@ -246,6 +260,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
     });
 
     setHasAddedToCart(true);
+    setNoticeTone("success");
     setNotice(
       result.wasAdjusted
         ? `Only ${result.quantity} total can be added because that is the current stock for ${selectedVariant.name}.`
@@ -304,29 +319,46 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
   );
 
   async function toggleWishlist() {
-    const response = await fetch("/api/wishlist/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id }),
-    });
-
-    if (response.status === 401) {
-      setNotice("Sign in to save this product to your wishlist.");
+    if (isWishlistPending) {
       return;
     }
 
-    if (!response.ok) {
-      setNotice("Wishlist could not be updated. Please try again.");
-      return;
-    }
+    setIsWishlistPending(true);
 
-    const result = (await response.json()) as { saved: boolean };
-    setNotice(result.saved ? "Saved to wishlist." : "Removed from wishlist.");
+    try {
+      const response = await fetch("/api/wishlist/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (response.status === 401) {
+        setNotice("Sign in to save this product to your wishlist.");
+        setNoticeTone("error");
+        return;
+      }
+
+      if (!response.ok) {
+        setNotice("Wishlist could not be updated. Please try again.");
+        setNoticeTone("error");
+        return;
+      }
+
+      const result = (await response.json()) as { saved: boolean };
+      setSaved(product.id, result.saved);
+      setNotice(result.saved ? "Saved to wishlist." : "Removed from wishlist.");
+      setNoticeTone("success");
+    } catch {
+      setNotice("Wishlist could not be updated. Check your connection and try again.");
+      setNoticeTone("error");
+    } finally {
+      setIsWishlistPending(false);
+    }
   }
 
   return (
-    <div className="pb-24 lg:pb-0">
-      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] lg:items-start">
+    <div className="pb-24 lg:pb-0" ref={productDetailRef}>
+      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] lg:items-start">
         <section aria-label="Product image gallery" className="lg:col-start-1 lg:row-start-1">
           <div className={showThumbnails ? "grid gap-4 sm:grid-cols-[5.5rem_1fr]" : "grid gap-4"}>
             {showThumbnails ? (
@@ -339,22 +371,22 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                       aria-label={`Show ${image.label}`}
                       aria-pressed={isSelected}
                       className={[
-                        "relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border bg-surface shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+                        "relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-xl border bg-surface shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
                         isSelected ? "border-cta ring-2 ring-cta/20" : "border-border hover:border-cta",
                       ].join(" ")}
                       key={image.key}
                       onClick={() => setSelectedGalleryKey(image.key)}
                       type="button"
                     >
-                      <Image alt="" className="h-full w-full object-contain p-1.5" fill sizes="96px" src={image.url} unoptimized />
+                      <Image alt="" className="h-full w-full object-contain p-1.5" fill sizes="80px" src={image.url} />
                     </button>
                   );
                 })}
               </div>
             ) : null}
 
-            <div className="order-1 mx-auto w-full max-w-[600px] overflow-hidden rounded-xl border border-border bg-[linear-gradient(135deg,#FFFFFF_0%,#FAF8F1_62%,#EEF7EF_100%)] p-3 shadow-[0_18px_56px_rgba(15,46,26,0.1)] sm:order-2">
-              <div className="relative aspect-[4/3] max-h-[520px] overflow-hidden rounded-lg bg-white">
+            <div className="order-1 mx-auto w-full max-w-[640px] overflow-hidden rounded-2xl border border-border bg-[linear-gradient(135deg,#FFFFFF_0%,#F7F6F1_62%,#EDF5EF_100%)] p-3 shadow-[0_22px_62px_rgba(18,60,46,0.1)] sm:order-2 sm:p-4">
+              <div className="relative aspect-[4/3] max-h-[560px] overflow-hidden rounded-xl bg-white">
                 {activeImage ? (
                   <Image
                     alt={activeImage.altText}
@@ -363,7 +395,6 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                     priority
                     sizes="(min-width: 1024px) 52vw, 100vw"
                     src={activeImage.url}
-                    unoptimized
                   />
                 ) : (
                   <ProductImagePlaceholder category={product.category.name} name={product.name} />
@@ -373,7 +404,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
           </div>
         </section>
 
-        <aside className="rounded-xl border border-border bg-surface p-3 shadow-[0_18px_50px_rgba(6,61,22,0.09)] lg:sticky lg:top-16 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <aside className="rounded-2xl border border-border bg-surface p-5 shadow-[0_22px_58px_rgba(18,60,46,0.1)] lg:sticky lg:top-44 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:p-6">
           <div className="flex flex-wrap gap-2">
             {product.isWeeklyOffer ? <Pill tone="gold">Weekly offer</Pill> : null}
             {product.isBestSeller ? <Pill>Best seller</Pill> : null}
@@ -381,23 +412,23 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             {hasSale ? <Pill tone="gold">Sale price</Pill> : null}
           </div>
 
-          <div className="mt-2">
+          <div className="mt-4">
             <Link className="text-sm font-extrabold text-fresh transition-colors hover:text-cta-hover" href={`/category/${product.category.slug}`} scroll>
               {product.category.name}
             </Link>
-            <h1 className="mt-1 text-[1.45rem] font-extrabold leading-tight text-text sm:text-[1.7rem]">{product.name}</h1>
+            <h1 className="mt-1.5 text-[1.6rem] font-black leading-tight tracking-tight text-text sm:text-[1.9rem]">{product.name}</h1>
             <p className="mt-1 text-xs font-semibold leading-5 text-text-muted">
               Brand: <span className="font-bold text-text">{product.brand?.name ?? "A1 Haat Bazar"}</span>
               {product.brand?.country ? ` / ${product.brand.country}` : ""}
             </p>
           </div>
 
-          <div className="mt-2 rounded-xl border border-cta/25 bg-cta-soft/70 p-2">
+          <div className="mt-5 rounded-xl border border-cta/25 bg-cta-soft/70 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-bold text-text-muted">Selected pack</p>
               {selectedVariantIsOffer ? <Pill tone="gold">{selectedVariantOfferLabel}</Pill> : null}
             </div>
-            <div className="mt-1 grid gap-1 sm:grid-cols-2">
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <div className="min-w-0">
                 <p className="text-sm font-extrabold text-text">{selectedVariant.name}</p>
                 <p className="mt-0.5 text-[0.7rem] font-bold text-text-muted">SKU {selectedVariant.sku}</p>
@@ -411,12 +442,12 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                         {formatCurrency(selectedVariant.price, selectedVariant.currency)}
                       </span>
                     </p>
-                    <p className="mt-0.5 text-xl font-black leading-none text-cta-hover">
+                    <p className="mt-1 text-2xl font-black leading-none text-cta-hover">
                       <span className="mr-1 text-sm font-extrabold text-primary">Now</span>
                       {" "}
                       {formatCurrency(price, selectedVariant.currency)}
                     </p>
-                    <p className="mt-1 text-[0.7rem] font-extrabold text-primary">
+                    <p className="mt-1.5 text-xs font-extrabold text-primary">
                       Save {formatCurrency(saveAmount(selectedVariant), selectedVariant.currency)} / {discountPercent(selectedVariant)}% off
                     </p>
                   </div>
@@ -437,11 +468,12 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             </div>
           </div>
 
-          <fieldset className="mt-2">
-            <legend className="text-xs font-extrabold text-text">Choose size or pack</legend>
-            <div className="mt-1.5 grid gap-1.5">
+          <fieldset className="mt-5">
+            <legend className="text-sm font-extrabold text-text">Choose size or pack</legend>
+            <div className="mt-2 grid gap-2">
               {product.variants.map((variant) => {
                 const isSelected = variant.id === selectedVariant.id;
+                const isUnavailable = !variant.isAvailable || variant.stock <= 0;
                 const variantPrice = effectivePrice(variant);
                 const variantHasOffer = isOfferVariant(product, variant);
                 const variantOfferLabel = product.isWeeklyOffer ? "Weekly offer" : "Sale price";
@@ -449,10 +481,12 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                 return (
                   <button
                     aria-pressed={isSelected}
+                    aria-label={`${variant.name}, ${isUnavailable ? "unavailable" : formatCurrency(variantPrice, variant.currency)}`}
                     className={[
-                      "cursor-pointer rounded-lg border px-2 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+                      "min-h-12 cursor-pointer rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:opacity-55",
                       isSelected ? "border-cta bg-cta-soft" : "border-border bg-surface hover:border-cta hover:bg-surface-muted",
                     ].join(" ")}
+                    disabled={isUnavailable}
                     key={variant.id}
                     onClick={() => selectVariant(variant.id)}
                     type="button"
@@ -461,7 +495,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                       <span className="min-w-0">
                         <span className="block text-sm font-extrabold text-text">{variant.name}</span>
                         {variantHasOffer ? (
-                          <span className="mt-0.5 block text-[0.7rem] font-extrabold text-cta-hover">
+                          <span className="mt-0.5 block text-xs font-extrabold text-cta-hover">
                             {variantOfferLabel} / Save {formatCurrency(saveAmount(variant), variant.currency)}
                           </span>
                         ) : null}
@@ -474,7 +508,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                         ) : (
                           <span className="block text-sm font-extrabold text-text">{formatCurrency(variantPrice, variant.currency)}</span>
                         )}
-                        <span className={`mt-0.5 block text-[0.7rem] font-bold ${variant.stock > 0 ? "text-fresh" : "text-text-muted"}`}>
+                        <span className={`mt-0.5 block text-xs font-bold ${!isUnavailable ? "text-fresh" : "text-text-muted"}`}>
                           {stockLabel(variant.stock)}
                         </span>
                       </span>
@@ -485,17 +519,17 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             </div>
           </fieldset>
 
-          <div className="mt-2">
+          <div className="mt-5">
             <div className="flex items-center justify-between gap-3">
               <label className="text-xs font-extrabold text-text" htmlFor="product-quantity">
                 Quantity
               </label>
-              {canAddToCart ? <p className="text-[0.7rem] font-semibold text-text-muted">Max {selectedVariant.stock}</p> : null}
+              {canAddToCart ? <p className="text-xs font-semibold text-text-muted">Max {selectedVariant.stock}</p> : null}
             </div>
-            <div className="mt-1 grid grid-cols-[40px_1fr_40px] overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="mt-2 grid grid-cols-[44px_1fr_44px] overflow-hidden rounded-xl border border-border bg-surface">
               <button
                 aria-label="Decrease quantity"
-                className="min-h-9 cursor-pointer border-r border-border text-lg font-black text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:text-text-muted"
+                className="min-h-11 cursor-pointer border-r border-border text-lg font-black text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:text-text-muted"
                 disabled={!canAddToCart || selectedQuantity <= 1}
                 onClick={() => updateRequestedQuantity(selectedQuantity - 1)}
                 type="button"
@@ -503,7 +537,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
                 -
               </button>
               <input
-                className="min-h-9 border-0 bg-surface px-3 text-center text-sm font-black text-text"
+                className="min-h-11 border-0 bg-surface px-3 text-center text-sm font-black text-text"
                 disabled={!canAddToCart}
                 id="product-quantity"
                 inputMode="numeric"
@@ -515,7 +549,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
               />
               <button
                 aria-label="Increase quantity"
-                className="min-h-9 cursor-pointer border-l border-border text-lg font-black text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:text-text-muted"
+                className="min-h-11 cursor-pointer border-l border-border text-lg font-black text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:text-text-muted"
                 disabled={!canAddToCart || selectedQuantity >= selectedVariant.stock}
                 onClick={() => updateRequestedQuantity(selectedQuantity + 1)}
                 type="button"
@@ -525,9 +559,9 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             </div>
           </div>
 
-          <div className="mt-2 grid gap-1.5">
+          <div className="mt-5 grid gap-2">
             <button
-              className="a1-primary-button !min-h-10 cursor-pointer px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+              className="a1-primary-button !min-h-12 cursor-pointer px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
               disabled={!canAddToCart}
               onClick={addSelectedVariantToCart}
               type="button"
@@ -536,7 +570,7 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             </button>
             {hasAddedToCart ? (
               <button
-                className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface px-5 text-center text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-border bg-surface px-5 text-center text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
                 onClick={openCartDrawer}
                 type="button"
               >
@@ -546,40 +580,28 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
           </div>
 
           <button
-            className="mt-2 min-h-9 w-full cursor-pointer rounded-lg border border-border bg-surface px-5 text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            aria-pressed={productIsSaved}
+            className="mt-2 min-h-12 w-full cursor-pointer rounded-xl border border-border bg-surface px-5 text-sm font-extrabold text-text transition-colors hover:border-primary/30 hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-65"
+            disabled={isWishlistPending}
             onClick={toggleWishlist}
             type="button"
           >
-            Save to wishlist
+            {isWishlistPending ? "Updating wishlist…" : productIsSaved ? "Remove from wishlist" : "Save to wishlist"}
           </button>
 
-          <div className="mt-2 grid gap-1 rounded-lg border border-cta/20 bg-cta-soft/60 p-2">
-            <CompactTrustItem>Delivery or store pickup</CompactTrustItem>
-            <CompactTrustItem>Pay on delivery / pay at pickup</CompactTrustItem>
-            <CompactTrustItem>Stock checked before confirmation</CompactTrustItem>
-          </div>
         </aside>
 
         <div className="lg:col-start-1 lg:row-start-2">{productInfo}</div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-surface/96 p-3 shadow-[0_-12px_30px_rgba(6,61,22,0.12)] backdrop-blur lg:hidden">
+      {showMobileBuyBar ? <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-surface px-[max(0.75rem,env(safe-area-inset-left))] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(18,60,46,0.12)] lg:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-bold text-text-muted">{selectedVariant.name}</p>
             <p className="text-lg font-black text-text">{formatCurrency(price, selectedVariant.currency)}</p>
           </div>
-          {hasAddedToCart ? (
-            <button
-              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-extrabold text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-              onClick={openCartDrawer}
-              type="button"
-            >
-              View cart
-            </button>
-          ) : null}
           <button
-            className="a1-primary-button min-h-11 shrink-0 cursor-pointer px-5 text-sm disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+            className="a1-primary-button min-h-12 min-w-36 shrink-0 cursor-pointer px-5 text-sm disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
             disabled={!canAddToCart}
             onClick={addSelectedVariantToCart}
             type="button"
@@ -587,11 +609,12 @@ export function ProductDetailView({ initialVariant, product }: ProductDetailView
             {canAddToCart ? "Add to cart" : "Out of stock"}
           </button>
         </div>
-      </div>
+      </div> : null}
 
       <ToastMessage
+        elevatedOnMobile
         message={notice}
-        tone={notice?.includes("out of stock") || notice?.includes("could not") ? "error" : "success"}
+        tone={noticeTone}
       />
     </div>
   );

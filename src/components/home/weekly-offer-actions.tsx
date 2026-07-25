@@ -40,14 +40,14 @@ export function WeeklyOfferActions({ product, productHref }: { product: Storefro
   }
 
   return (
-    <div className="pt-1.5">
-      <div className="min-h-5 text-xs font-bold text-primary" aria-live="polite">
+    <div className="pt-1.5 sm:pt-2">
+      <div className="min-h-5 text-xs font-bold leading-5 text-primary sm:min-h-6 sm:text-sm" aria-live="polite">
         {notice ?? ""}
       </div>
       {!product.isInStock ? (
         <button
           aria-label={`${product.name} is out of stock`}
-          className="mt-1.5 min-h-10 w-full cursor-not-allowed rounded-md bg-surface-muted px-3 py-2 text-sm font-extrabold text-text-muted disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+          className="mt-1.5 min-h-11 w-full cursor-not-allowed rounded-xl bg-surface-muted px-3 py-2 text-sm font-extrabold text-text-muted disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
           disabled
           type="button"
         >
@@ -56,7 +56,7 @@ export function WeeklyOfferActions({ product, productHref }: { product: Storefro
       ) : canDirectAdd ? (
         <button
           aria-label={`Add ${product.name} to cart`}
-          className="a1-primary-button mt-1.5 w-full cursor-pointer px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+          className="a1-primary-button mt-1.5 min-h-11 w-full cursor-pointer rounded-xl px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
           onClick={addSingleVariant}
           type="button"
         >
@@ -66,7 +66,7 @@ export function WeeklyOfferActions({ product, productHref }: { product: Storefro
       ) : (
         <Link
           aria-label={`Select a pack for ${product.name}`}
-          className="a1-primary-button mt-1.5 w-full px-3 py-2 text-center text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+          className="a1-primary-button mt-1.5 min-h-11 w-full rounded-xl px-3 py-2 text-center text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
           href={productHref}
           prefetch={false}
           scroll

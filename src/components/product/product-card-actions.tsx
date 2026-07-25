@@ -19,7 +19,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-[18px] w-[18px] transition-transform duration-200"
+      className="h-5 w-5 transition-opacity duration-200"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeLinecap="round"
@@ -32,9 +32,20 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function CartIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
+      <path d="M3.5 4.5h2l1.7 9.1a2 2 0 0 0 2 1.7h7.7a2 2 0 0 0 1.9-1.4l1.3-5.2H6.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9.5" cy="19" r="1.25" />
+      <circle cx="17" cy="19" r="1.25" />
+    </svg>
+  );
+}
+
 export function ProductCardWishlistAction({ product }: { product: StorefrontProductCard }) {
-  const { isSaved: isProductSaved, setSaved } = useWishlist();
+  const { isAuthenticated, isSaved: isProductSaved, setSaved, showSignInPrompt } = useWishlist();
   const [floatingNotice, setFloatingNotice] = useState<FloatingNotice | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const heartButtonRef = useRef<HTMLButtonElement | null>(null);
   const isSaved = isProductSaved(product.id);
 
@@ -53,40 +64,61 @@ export function ProductCardWishlistAction({ product }: { product: StorefrontProd
   }
 
   async function toggleWishlist() {
-    const response = await fetch("/api/wishlist/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id }),
-    });
+    if (isUpdating) {
+      return;
+    }
 
-    if (response.status === 401) {
-      const nextPath = `${window.location.pathname}${window.location.search}`;
-      showFloatingNotice("Sign in to save items", "error", heartButtonRef.current, {
-        actionHref: `/login?next=${encodeURIComponent(nextPath)}`,
-        actionLabel: "Sign in",
+    if (!isAuthenticated) {
+      showSignInPrompt();
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const response = await fetch("/api/wishlist/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
       });
-      return;
-    }
 
-    if (!response.ok) {
+      if (response.status === 401) {
+        showSignInPrompt();
+        return;
+      }
+
+      if (!response.ok) {
+        showFloatingNotice("Wishlist could not be updated", "error", heartButtonRef.current);
+        return;
+      }
+
+      const result = (await response.json()) as { saved: boolean };
+      setSaved(product.id, result.saved);
+      showFloatingNotice(result.saved ? "Saved to wishlist" : "Removed from wishlist", "success", heartButtonRef.current);
+    } catch {
       showFloatingNotice("Wishlist could not be updated", "error", heartButtonRef.current);
-      return;
+    } finally {
+      setIsUpdating(false);
     }
-
-    const result = (await response.json()) as { saved: boolean };
-    setSaved(product.id, result.saved);
-    showFloatingNotice(result.saved ? "Saved to wishlist" : "Removed from wishlist", "success", heartButtonRef.current);
   }
 
   return (
     <>
       <button
-        aria-label={`Save ${product.name} to wishlist`}
+        aria-busy={isUpdating}
+        aria-label={
+          !isAuthenticated
+            ? `Sign in to save ${product.name} to wishlist`
+            : isSaved
+              ? `Remove ${product.name} from wishlist`
+              : `Add ${product.name} to wishlist`
+        }
         aria-pressed={isSaved}
         className={[
-          "absolute right-2 top-2 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-border bg-white/95 shadow-sm transition-[background,color,transform] duration-200 hover:scale-105 hover:bg-fresh-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:right-3 sm:top-3 sm:h-10 sm:w-10",
+          "absolute right-2 top-2 z-10 grid h-11 w-11 cursor-pointer place-items-center rounded-full border border-border/90 bg-surface/95 shadow-[0_4px_14px_rgba(24,38,27,0.12)] transition-[background-color,border-color,color] duration-200 hover:border-cta/50 hover:bg-cta-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-70 sm:right-3 sm:top-3",
           isSaved ? "text-danger" : "text-primary",
         ].join(" ")}
+        disabled={isUpdating}
         onClick={toggleWishlist}
         ref={heartButtonRef}
         type="button"
@@ -141,11 +173,11 @@ export function ProductCardPurchaseActions({ product, productHref }: { product: 
           tone={floatingNotice.tone}
         />
       ) : null}
-      <div className="flex flex-col gap-1">
+      <div>
         {!product.isInStock ? (
           <button
             aria-label={`${product.name} is out of stock`}
-            className="min-h-10 w-full min-w-0 cursor-not-allowed overflow-hidden text-ellipsis whitespace-nowrap rounded-md bg-surface-muted px-2 py-2 text-center text-xs font-extrabold text-text-muted sm:min-h-11 sm:px-3 sm:text-sm"
+            className="min-h-11 w-full min-w-0 cursor-not-allowed overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-border bg-surface-muted px-2 py-2 text-center text-xs font-extrabold text-text-muted sm:px-3 sm:text-sm"
             disabled
             type="button"
           >
@@ -154,34 +186,26 @@ export function ProductCardPurchaseActions({ product, productHref }: { product: 
         ) : canDirectAdd ? (
           <button
             aria-label={`Add ${product.name} to cart`}
-            className="a1-primary-button min-h-10 w-full min-w-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
+            className="a1-primary-button min-h-11 w-full min-w-0 cursor-pointer gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap !rounded-xl px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:gap-2 sm:px-3 sm:text-sm"
             onClick={addSingleVariant}
             ref={addButtonRef}
             type="button"
           >
-            <span className="sm:hidden">Add</span>
-            <span className="hidden sm:inline">Add to cart</span>
+            <CartIcon />
+            <span>Add to cart</span>
           </button>
         ) : (
           <Link
             aria-label={`Select a pack for ${product.name}`}
-            className="a1-primary-button min-h-10 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:min-h-11 sm:px-3 sm:text-sm"
+            className="a1-primary-button min-h-11 w-full min-w-0 gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap !rounded-xl px-2 py-2 text-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:gap-2 sm:px-3 sm:text-sm"
             href={productHref}
             prefetch={false}
             scroll
           >
+            <CartIcon />
             Select pack
           </Link>
         )}
-        <Link
-          aria-label={`View details for ${product.name}`}
-          className="relative mx-auto inline-flex min-h-7 w-fit items-center justify-center whitespace-nowrap rounded-sm px-1 text-center text-[0.72rem] font-bold text-primary/75 transition-colors after:absolute after:bottom-1 after:left-1 after:right-1 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-200 hover:text-primary hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta focus-visible:after:scale-x-100 sm:text-xs"
-          href={productHref}
-          prefetch={false}
-          scroll
-        >
-          View details
-        </Link>
       </div>
     </>
   );

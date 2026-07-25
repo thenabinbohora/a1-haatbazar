@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/site-shell";
 import { APP_NAME, BRAND_FAVICON_SRC, BRAND_ICON_SRC, BRAND_LOGO_SRC } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth";
 import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -62,16 +63,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export const viewport: Viewport = {
+  initialScale: 1,
+  themeColor: "#123C2E",
+  viewportFit: "cover",
+  width: "device-width",
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const user = await getCurrentUser();
+
   return (
     <html className={`${inter.variable} ${plusJakarta.variable}`} data-scroll-behavior="smooth" lang="en">
       <body>
-        <div className="flex min-h-screen flex-col">
-          <SiteShell>{children}</SiteShell>
+        <div className="flex min-h-dvh flex-col">
+          <SiteShell isAuthenticated={user?.role === "CUSTOMER" || user?.role === "ADMIN"}>{children}</SiteShell>
         </div>
       </body>
     </html>

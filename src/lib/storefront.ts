@@ -1,4 +1,6 @@
 import type { Prisma } from "@prisma/client";
+import { cache } from "react";
+import { HOME_FEATURED_CATEGORY_SLUGS } from "@/config/categories";
 import { prisma } from "@/lib/prisma";
 import { customerImageUrl } from "@/lib/customer-images";
 import { customerImageAlt, customerProductName } from "@/lib/display";
@@ -62,6 +64,19 @@ export type StorefrontProductCard = {
 export type StorefrontFilters = {
   categories: Array<{ id: string; name: string; slug: string; productCount: number }>;
   brands: Array<{ id: string; name: string; slug: string; country?: string | null }>;
+};
+
+export type StorefrontCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  parentId: string | null;
+  productCount: number;
+  displayOrder: number;
+  isFeatured: boolean;
+  isFeaturedOnHome: boolean;
 };
 
 export type StorefrontProductDetail = {
@@ -253,18 +268,54 @@ function sortProducts(products: StorefrontProductCard[], sort = "newest") {
   });
 }
 
+const publicCategoryProductWhere = {
+  status: "ACTIVE",
+  variants: { some: { status: "ACTIVE" } },
+} satisfies Prisma.ProductWhereInput;
+
+export const getStorefrontCategories = cache(async (): Promise<StorefrontCategory[]> => {
+  const categories = await prisma.category.findMany({
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      imageUrl: true,
+      parentId: true,
+      sortOrder: true,
+      isFeatured: true,
+      _count: { select: { products: { where: publicCategoryProductWhere } } },
+    },
+  });
+
+  return categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    description: category.description,
+    imageUrl: customerImageUrl(category.imageUrl),
+    parentId: category.parentId,
+    productCount: category._count.products,
+    displayOrder: category.sortOrder,
+    isFeatured: category.isFeatured,
+    isFeaturedOnHome: HOME_FEATURED_CATEGORY_SLUGS.some((slug) => slug === category.slug),
+  }));
+});
+
+export async function getHomeFeaturedCategories(): Promise<StorefrontCategory[]> {
+  const categories = await getStorefrontCategories();
+  const categoryBySlug = new Map(categories.map((category) => [category.slug, category]));
+
+  return HOME_FEATURED_CATEGORY_SLUGS.flatMap((slug) => {
+    const category = categoryBySlug.get(slug);
+    return category ? [category] : [];
+  });
+}
+
 export async function getStorefrontFilters(): Promise<StorefrontFilters> {
   const [categories, brands] = await Promise.all([
-    prisma.category.findMany({
-      where: { products: { some: { status: "ACTIVE" } } },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        _count: { select: { products: { where: { status: "ACTIVE" } } } },
-      },
-    }),
+    getStorefrontCategories(),
     prisma.brand.findMany({
       where: { products: { some: { status: "ACTIVE" } } },
       orderBy: { name: "asc" },
@@ -273,12 +324,14 @@ export async function getStorefrontFilters(): Promise<StorefrontFilters> {
   ]);
 
   return {
-    categories: categories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      productCount: category._count.products,
-    })),
+    categories: categories
+      .filter((category) => category.productCount > 0)
+      .map((category) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        productCount: category.productCount,
+      })),
     brands,
   };
 }
@@ -337,24 +390,11 @@ export async function getPublicProducts(
 }
 
 export async function getFeaturedCategories(take = 8) {
-  const categories = await prisma.category.findMany({
-    where: { products: { some: { status: "ACTIVE" } } },
-    orderBy: [{ isFeatured: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
-    take,
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      imageUrl: true,
-      _count: { select: { products: { where: { status: "ACTIVE" } } } },
-    },
-  });
+  const categories = await getStorefrontCategories();
 
-  return categories.map((category) => ({
-    ...category,
-    imageUrl: customerImageUrl(category.imageUrl),
-  }));
+  return categories
+    .filter((category) => category.isFeatured && category.productCount > 0)
+    .slice(0, take);
 }
 
 export async function getActiveHomeBanners() {

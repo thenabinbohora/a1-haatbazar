@@ -13,7 +13,7 @@ export function AuthSubmitButton({ idleLabel, pendingLabel }: AuthSubmitButtonPr
   return (
     <button
       aria-disabled={pending}
-      className="min-h-12 cursor-pointer rounded-md bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-75"
+      className="min-h-12 cursor-pointer rounded-xl bg-primary px-5 text-base font-extrabold text-white shadow-sm transition-[background-color,box-shadow] hover:bg-primary-muted hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-75 sm:text-sm"
       disabled={pending}
       type="submit"
     >

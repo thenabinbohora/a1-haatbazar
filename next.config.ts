@@ -4,7 +4,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // Next.js requires 'unsafe-inline' for its inline bootstrap scripts/styles and
 // 'unsafe-eval' in development for React Refresh. Product images are served
-// from Supabase Storage, and the store map is a Google Maps embed.
+// from Supabase Storage. The store location uses a Google Maps iframe embed.
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,

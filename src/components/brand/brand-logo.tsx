@@ -40,7 +40,7 @@ export function BrandLogo({ href = "/", variant = "light", compact = false, disp
             : "h-[30px] w-[166px] object-contain sm:h-9 sm:w-[200px] xl:h-10 xl:w-[222px]"
         }
         height={414}
-        loading="eager"
+        loading={variant === "dark" ? "lazy" : "eager"}
         sizes={
           variant === "dark"
             ? "(min-width: 640px) 244px, 220px"
@@ -55,7 +55,7 @@ export function BrandLogo({ href = "/", variant = "light", compact = false, disp
   return (
     <Link
       aria-label={`${APP_NAME} home`}
-      className="group flex w-fit shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
+      className="group flex min-h-11 w-fit shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
       href={href}
       prefetch={false}
     >

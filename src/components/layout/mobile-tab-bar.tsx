@@ -11,7 +11,12 @@ export function shouldShowMobileTabBar(pathname: string | null) {
   }
 
   // Product detail has its own sticky buy bar; checkout keeps a distraction-free funnel.
-  if (/^\/products\/[^/]+$/.test(pathname) || pathname.startsWith("/checkout")) {
+  if (
+    /^\/products\/[^/]+$/.test(pathname) ||
+    pathname.startsWith("/checkout") ||
+    pathname === "/login" ||
+    pathname === "/reset-password"
+  ) {
     return false;
   }
 
@@ -76,8 +81,8 @@ function tabClass(isActive: boolean) {
 
 function iconWrapClass(isActive: boolean) {
   return [
-    "grid h-7 w-14 place-items-center rounded-full transition-colors duration-200",
-    isActive ? "bg-fresh-soft" : "bg-transparent",
+    "grid h-7 w-12 place-items-center rounded-full transition-colors duration-200",
+    isActive ? "bg-primary text-white shadow-sm" : "bg-transparent",
   ].join(" ");
 }
 
@@ -86,40 +91,42 @@ export function MobileTabBar() {
   const { itemCount, isReady } = useCart();
   const { open } = useCartDrawer();
   const count = isReady ? itemCount : 0;
+  const displayCount = count > 9 ? "9+" : count;
 
   if (!shouldShowMobileTabBar(pathname)) {
     return null;
   }
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : Boolean(pathname?.startsWith(href)));
+  const isCartActive = pathname?.startsWith("/cart") ?? false;
 
   return (
     <nav
       aria-label="Bottom navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,46,26,0.08)] backdrop-blur xl:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] xl:hidden"
     >
-      <div className="mx-auto flex h-16 max-w-lg items-stretch">
+      <div className="pointer-events-auto mx-auto flex h-[3.75rem] max-w-xl items-stretch rounded-2xl border border-border bg-surface/96 px-1 shadow-[0_14px_42px_rgba(18,60,46,0.18)] backdrop-blur-xl">
         {tabs.map((tab) =>
           tab.href === "__cart__" ? (
             <button
-              aria-label="Open shopping cart"
-              className={tabClass(false)}
+              aria-current={isCartActive ? "page" : undefined}
+              aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
+              className={tabClass(isCartActive)}
               key={tab.label}
               onClick={open}
               type="button"
             >
-              <span className={iconWrapClass(false)}>
+              <span className={isCartActive ? iconWrapClass(true) : "grid h-7 w-12 place-items-center rounded-full bg-cta-soft text-primary"}>
                 <span className="relative">
                   <CartTabIcon />
-                  <span
-                    className={[
-                      "absolute -right-2.5 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-primary/15 bg-cta-soft px-1 text-[10px] font-black leading-none text-primary shadow-[0_2px_6px_rgba(6,61,22,0.16)]",
-                      count > 0 ? "opacity-100" : "opacity-0",
-                    ].join(" ")}
-                    suppressHydrationWarning
-                  >
-                    {count}
-                  </span>
+                  {count > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-2.5 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-primary/15 bg-cta-soft px-1 text-[10px] font-black leading-none text-primary shadow-[0_2px_8px_rgba(18,60,46,0.18)]"
+                    >
+                      {displayCount}
+                    </span>
+                  ) : null}
                 </span>
               </span>
               {tab.label}

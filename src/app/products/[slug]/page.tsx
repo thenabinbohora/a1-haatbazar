@@ -125,38 +125,38 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     <div className="bg-background">
       <JsonLd data={buildProductSchema(product)} />
       <JsonLd data={buildBreadcrumbSchema(product)} />
-      <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-          <nav className="flex flex-wrap items-center gap-2 text-sm text-text-muted" aria-label="Breadcrumb">
-            <Link className="font-semibold hover:text-text" href="/">
+      <section className="border-b border-border bg-surface/70">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex min-h-11 items-center gap-1.5 overflow-hidden text-xs text-text-muted sm:gap-2 sm:text-sm" aria-label="Breadcrumb">
+            <Link className="inline-flex min-h-11 shrink-0 items-center font-semibold hover:text-text" href="/">
               Home
             </Link>
             <span>/</span>
-            <Link className="font-semibold hover:text-text" href="/products">
+            <Link className="hidden min-h-11 shrink-0 items-center font-semibold hover:text-text min-[380px]:inline-flex" href="/products">
               Products
             </Link>
-            <span>/</span>
-            <Link className="font-semibold hover:text-text" href={`/category/${product.category.slug}`} scroll>
+            <span className="hidden min-[380px]:inline">/</span>
+            <Link className="inline-flex min-h-11 shrink-0 items-center font-semibold hover:text-text" href={`/category/${product.category.slug}`} scroll>
               {product.category.name}
             </Link>
             <span>/</span>
-            <span className="font-semibold text-text">{product.name}</span>
+            <span className="truncate font-semibold text-text">{product.name}</span>
           </nav>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
         <ProductDetailView initialVariant={selectedVariant} product={product} />
       </section>
 
       <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase text-fresh">Related products</p>
-              <h2 className="mt-1 text-3xl font-bold text-text">More from {product.category.name}</h2>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-fresh">Related products</p>
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-text sm:text-3xl">More from {product.category.name}</h2>
             </div>
-            <Link className="text-sm font-semibold text-cta-hover hover:text-cta" href={`/category/${product.category.slug}`} scroll>
+            <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-cta-hover hover:text-cta" href={`/category/${product.category.slug}`} scroll>
               View category
             </Link>
           </div>

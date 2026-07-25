@@ -21,6 +21,7 @@ type Suggestion = {
 type SearchBoxProps = {
   variant?: "header" | "hero";
   placeholder?: string;
+  initialQuery?: string;
 };
 
 const quickSearches = ["basmati rice", "momo masala", "wai wai", "tea", "ghee"] as const;
@@ -88,7 +89,7 @@ function SearchSuggestionsPanel({
           <div className="flex flex-wrap gap-2">
             {quickSearches.map((term) => (
               <button
-                className="min-h-9 cursor-pointer rounded-full border border-primary/12 bg-fresh-soft/75 px-3 text-sm font-bold text-primary transition-colors hover:border-cta/40 hover:bg-cta-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                className="min-h-11 cursor-pointer rounded-full border border-primary/12 bg-fresh-soft/75 px-3 text-sm font-bold text-primary transition-colors hover:border-cta/40 hover:bg-cta-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
                 key={term}
                 onClick={() => onSelectQuickSearch(term)}
                 type="button"
@@ -107,21 +108,24 @@ function SearchSuggestionsPanel({
       ) : null}
 
       {suggestions.length > 0 ? (
-        <ul>
+        <div>
           {suggestions.map((suggestion, index) => (
-            <li key={suggestion.id} role="option" aria-selected={index === activeIndex}>
               <button
+                aria-selected={index === activeIndex}
                 className={[
                   "flex w-full cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors",
                   index === activeIndex ? "bg-fresh-soft" : "hover:bg-surface-muted",
                 ].join(" ")}
+                id={`${listboxId}-option-${suggestion.id}`}
+                key={suggestion.id}
                 onClick={() => onSelectSuggestion(suggestion)}
                 onMouseEnter={() => setActiveIndex(index)}
+                role="option"
                 type="button"
               >
                 <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted">
                   {suggestion.imageUrl ? (
-                    <Image alt="" className="h-full w-full object-cover" fill sizes="44px" src={suggestion.imageUrl} unoptimized />
+                    <Image alt="" className="h-full w-full object-cover" fill sizes="44px" src={suggestion.imageUrl} />
                   ) : null}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -132,9 +136,8 @@ function SearchSuggestionsPanel({
                   {formatCurrency(suggestion.startingPrice, suggestion.currency)}
                 </span>
               </button>
-            </li>
           ))}
-        </ul>
+        </div>
       ) : null}
 
       {showEmptyState ? (
@@ -142,7 +145,7 @@ function SearchSuggestionsPanel({
           <p className="text-sm font-bold text-text">No quick matches found.</p>
           <p className="mt-1 text-xs font-semibold text-text-muted">Search all groceries for more results.</p>
           <button
-            className="mt-3 min-h-10 cursor-pointer rounded-full bg-primary px-4 text-sm font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            className="mt-3 min-h-11 cursor-pointer rounded-full bg-primary px-4 text-sm font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             onClick={onSearchAll}
             type="button"
           >
@@ -164,10 +167,14 @@ function SearchSuggestionsPanel({
   );
 }
 
-export function SearchBox({ variant = "header", placeholder = "Search rice, masala, noodles, tea" }: SearchBoxProps) {
+export function SearchBox({
+  variant = "header",
+  placeholder = "Search rice, masala, noodles, tea",
+  initialQuery = "",
+}: SearchBoxProps) {
   const router = useRouter();
   const listboxId = useId();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -187,14 +194,21 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     }
 
     const rect = container.getBoundingClientRect();
-    const viewportPadding = 12;
-    const top = rect.bottom + 8;
-    const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
+    const visualViewport = window.visualViewport;
+    const viewportPadding = window.innerWidth < 768 ? 8 : 12;
+    const viewportTop = visualViewport?.offsetTop ?? 0;
+    const viewportHeight = visualViewport?.height ?? window.innerHeight;
+    const viewportWidth = visualViewport?.width ?? window.innerWidth;
+    const top = Math.max(rect.bottom + (window.innerWidth < 768 ? 6 : 8), viewportTop + viewportPadding);
+    const width = window.innerWidth < 768
+      ? Math.max(0, viewportWidth - viewportPadding * 2)
+      : Math.min(rect.width, viewportWidth - viewportPadding * 2);
     const left = Math.min(
       Math.max(rect.left, viewportPadding),
-      Math.max(viewportPadding, window.innerWidth - width - viewportPadding),
+      Math.max(viewportPadding, viewportWidth - width - viewportPadding),
     );
-    const maxHeight = Math.max(180, Math.min(320, window.innerHeight - top - viewportPadding));
+    const availableHeight = Math.max(0, viewportTop + viewportHeight - top - viewportPadding);
+    const maxHeight = window.innerWidth < 768 ? availableHeight : Math.min(320, availableHeight);
 
     setPanelStyle({
       left,
@@ -243,10 +257,14 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     updatePanelPosition();
     window.addEventListener("resize", updatePanelPosition);
     window.addEventListener("scroll", updatePanelPosition, true);
+    window.visualViewport?.addEventListener("resize", updatePanelPosition);
+    window.visualViewport?.addEventListener("scroll", updatePanelPosition);
 
     return () => {
       window.removeEventListener("resize", updatePanelPosition);
       window.removeEventListener("scroll", updatePanelPosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePanelPosition);
+      window.visualViewport?.removeEventListener("scroll", updatePanelPosition);
     };
   }, [isOpen, isLoading, query, suggestions.length, updatePanelPosition]);
 
@@ -360,9 +378,9 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
     <form
       action="/search"
       className="relative z-30 min-w-0 focus-within:z-[65]"
-      onSubmit={() => {
-        setIsOpen(false);
-        setActiveIndex(-1);
+      onSubmit={(event) => {
+        event.preventDefault();
+        searchAll();
       }}
       ref={containerRef}
       role="search"
@@ -373,18 +391,19 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
       <div
         className={[
           "flex items-center rounded-full border border-border bg-surface shadow-sm transition-[border-color,box-shadow] focus-within:border-cta focus-within:shadow-[0_0_0_3px_rgba(198,146,46,0.16)]",
-          isHero ? "min-h-[3.25rem] gap-1.5 pl-4 pr-1.5 sm:min-h-14 sm:gap-2 sm:pl-5 sm:pr-2" : "min-h-11 gap-2 pl-4 pr-1.5",
+          isHero ? "min-h-[3.25rem] gap-1.5 pl-4 pr-1.5 sm:min-h-14 sm:gap-2 sm:pl-5 sm:pr-2" : "min-h-12 gap-1.5 pl-4 pr-0.5 md:min-h-11 md:gap-2 md:pr-1.5",
         ].join(" ")}
       >
         <SearchIcon className={isHero ? "h-5 w-5 shrink-0 text-text-muted" : "h-4 w-4 shrink-0 text-text-muted"} />
         <input
+          aria-activedescendant={isOpen && activeIndex >= 0 ? `${listboxId}-option-${suggestions[activeIndex]?.id}` : undefined}
           aria-autocomplete="list"
           aria-controls={isOpen ? listboxId : undefined}
           aria-expanded={isOpen}
           autoComplete="off"
           className={[
-            "min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-muted",
-            isHero ? "text-base" : "text-sm",
+            "min-h-11 min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-muted",
+            isHero ? "text-base" : "text-base md:text-sm",
           ].join(" ")}
           id={`${listboxId}-input`}
           name="q"
@@ -408,7 +427,7 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
         {query ? (
           <button
             aria-label="Clear search"
-            className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-text-muted transition-colors hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-text-muted transition-colors hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta md:h-9 md:w-9"
             onClick={clearSearch}
             type="button"
           >
@@ -419,7 +438,7 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
           aria-label="Search"
           className={[
             "a1-primary-button shrink-0 cursor-pointer rounded-full",
-            isHero ? "h-11 w-11 !min-h-0 px-0 text-sm sm:w-auto sm:px-6" : "h-9 w-9 !min-h-0 px-0",
+            isHero ? "h-11 w-11 !min-h-0 px-0 text-sm sm:w-auto sm:px-6" : "h-11 w-11 !min-h-0 px-0 md:h-9 md:w-9",
           ].join(" ")}
           type="submit"
         >
@@ -437,7 +456,15 @@ export function SearchBox({ variant = "header", placeholder = "Search rice, masa
       {isOpen && typeof document !== "undefined"
         ? createPortal(
             <>
-              <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[70] bg-primary/[0.025] md:hidden" />
+              <div
+                aria-hidden="true"
+                className="fixed inset-x-0 bottom-0 z-[70] cursor-default bg-primary/10 md:pointer-events-none md:bg-primary/[0.025]"
+                onPointerDown={() => {
+                  setIsOpen(false);
+                  setActiveIndex(-1);
+                }}
+                style={{ top: typeof panelStyle.top === "number" ? Math.max(0, panelStyle.top - 6) : 0 }}
+              />
               <SearchSuggestionsPanel
                 activeIndex={activeIndex}
                 isLoading={isLoading}

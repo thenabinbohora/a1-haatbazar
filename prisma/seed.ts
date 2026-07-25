@@ -49,6 +49,7 @@ const categories = [
   { name: "Oil and Ghee", slug: "oil-and-ghee", imageUrl: `${imageBase}/OilsandGheeCategory.png`, sortOrder: 70, isFeatured: true },
   { name: "Frozen Items", slug: "frozen-items", imageUrl: `${imageBase}/FrozenCategory.png`, sortOrder: 80, isFeatured: true },
   { name: "Vegetables", slug: "vegetables", imageUrl: `${imageBase}/VegetablesCategory.png`, sortOrder: 90, isFeatured: true },
+  { name: "Pickles and Chutneys", slug: "pickles-and-chutneys", imageUrl: `${imageBase}/PicklesCategory.png`, sortOrder: 100, isFeatured: true },
 ];
 
 const brands = [

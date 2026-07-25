@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 
 const CART_STORAGE_KEY = "grocery-store-pro.cart.v1";
@@ -26,6 +26,10 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
+
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
 
 function cleanQuantity(quantity: number, maxStock?: number) {
   const safeQuantity = Number.isFinite(quantity) ? Math.trunc(quantity) : 1;
@@ -157,9 +161,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const cart = useContext(CartContext);
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
 
   if (!cart) {
     throw new Error("useCart must be used inside CartProvider.");
+  }
+
+  if (!isHydrated) {
+    return {
+      ...cart,
+      isReady: false,
+      itemCount: 0,
+      items: [],
+    };
   }
 
   return cart;

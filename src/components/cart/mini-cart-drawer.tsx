@@ -12,12 +12,14 @@ type QuoteItem = {
   productId: string;
   variantId: string;
   quantity: number;
+  requestedQuantity: number;
   stock: number;
   unitPrice: number;
   originalPrice: number;
   currency: string;
   lineTotal: number;
   isAvailable: boolean;
+  wasAdjusted: boolean;
   reason: string | null;
   product: {
     name: string;
@@ -31,6 +33,9 @@ type QuoteItem = {
     sku: string;
   };
 };
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 type QuoteResponse = {
   items: QuoteItem[];
@@ -64,68 +69,148 @@ export function MiniCartDrawer() {
   const { isOpen, close } = useCartDrawer();
   const { items, isReady, itemCount, updateQuantity, removeItem } = useCart();
   const [quoteState, setQuoteState] = useState<{ key: string; data: QuoteResponse } | null>(null);
+  const [quoteErrorState, setQuoteErrorState] = useState<{ key: string; message: string } | null>(null);
+  const [quoteRequestVersion, setQuoteRequestVersion] = useState(0);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const router = useRouter();
 
   const itemsKey = JSON.stringify(items.map((item) => [item.variantId, item.quantity]));
-  const quote = quoteState?.data ?? null;
-  const isLoading = items.length > 0 && quoteState?.key !== itemsKey;
+  const currentQuote = quoteState?.key === itemsKey ? quoteState.data : null;
+  const quote = currentQuote ?? quoteState?.data ?? null;
+  const quoteError = quoteErrorState?.key === itemsKey ? quoteErrorState.message : null;
+  const hasItems = items.length > 0;
+  const isRefreshing = isOpen && isReady && hasItems && !currentQuote && !quoteError;
+  const visibleQuoteItems = quote?.items.filter((quoteItem) =>
+    items.some((cartItem) => cartItem.variantId === quoteItem.variantId),
+  ) ?? [];
+  const hasBlockingQuoteIssue =
+    !currentQuote ||
+    Boolean(quoteError) ||
+    currentQuote.items.length === 0 ||
+    currentQuote.items.some(
+      (item) => !item.isAvailable || item.wasAdjusted || item.quantity !== item.requestedQuantity,
+    );
 
   useEffect(() => {
     if (!isOpen || !isReady || items.length === 0) {
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     fetch("/api/cart/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
+      signal: controller.signal,
     })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: QuoteResponse | null) => {
-        if (!cancelled && data) {
-          setQuoteState({ key: itemsKey, data });
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Cart could not be refreshed.");
         }
-      })
-      .catch(() => null);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, isReady, items, itemsKey]);
+        return (await response.json()) as QuoteResponse;
+      })
+      .then((data) => {
+        setQuoteState({ key: itemsKey, data });
+        setQuoteErrorState(null);
+      })
+      .catch((fetchError: unknown) => {
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
+          return;
+        }
+
+        setQuoteErrorState({ key: itemsKey, message: "Cart could not be refreshed. Please try again." });
+      });
+
+    return () => controller.abort();
+  }, [isOpen, isReady, items, itemsKey, quoteRequestVersion]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousBodyOverflow = document.body.style.overflow;
+    const focusFrame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         close();
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((element) => element.getClientRects().length > 0 && element.getAttribute("aria-hidden") !== "true");
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        panelRef.current.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === firstElement || !panelRef.current.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousBodyOverflow;
+
+      const returnTarget = returnFocusRef.current;
+      if (returnTarget?.isConnected) {
+        window.requestAnimationFrame(() => returnTarget.focus());
+      }
     };
   }, [close, isOpen]);
+
+  function retryQuote() {
+    setQuoteErrorState(null);
+    setQuoteState((current) => (current?.key === itemsKey ? null : current));
+    setQuoteRequestVersion((version) => version + 1);
+  }
+
+  function acceptAdjustedQuantity(item: QuoteItem) {
+    if (item.quantity <= 0) {
+      removeItem(item.variantId);
+      return;
+    }
+
+    updateQuantity(item.variantId, item.quantity, item.stock);
+  }
 
   if (!isOpen) {
     return null;
   }
 
   const currency = quote?.summary.currency ?? "AUD";
-  const hasItems = items.length > 0;
 
   return (
-    <div aria-hidden={false} className="fixed inset-0 z-50">
+    <div aria-hidden={false} className="fixed inset-0 z-50 h-[100dvh]">
       <button
         aria-label="Close cart"
         className="a1-drawer-backdrop absolute inset-0 h-full w-full cursor-pointer bg-primary-muted/45 backdrop-blur-[2px]"
@@ -135,12 +220,12 @@ export function MiniCartDrawer() {
       <div
         aria-label="Shopping cart"
         aria-modal="true"
-        className="a1-drawer-panel absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-surface shadow-[-24px_0_60px_rgba(15,46,26,0.18)] outline-none"
+        className="a1-drawer-panel absolute inset-y-0 right-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col bg-surface shadow-[-24px_0_60px_rgba(15,46,26,0.18)] outline-none sm:rounded-l-2xl"
         ref={panelRef}
         role="dialog"
         tabIndex={-1}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border pb-4 pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-[calc(env(safe-area-inset-top)+1rem)]">
           <h2 className="text-lg font-extrabold text-text">
             Your cart{" "}
             <span className="ml-1 rounded-full bg-fresh-soft px-2.5 py-0.5 text-sm font-bold text-fresh">
@@ -149,15 +234,29 @@ export function MiniCartDrawer() {
           </h2>
           <button
             aria-label="Close cart"
-            className="grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-border text-text-muted transition-colors hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            className="grid h-12 w-12 shrink-0 cursor-pointer touch-manipulation place-items-center rounded-full border border-border text-text-muted transition-colors hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             onClick={close}
+            ref={closeButtonRef}
             type="button"
           >
             <CloseIcon />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overscroll-contain overflow-y-auto py-4 pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))]">
+          {quoteError && hasItems ? (
+            <div className="mb-4 rounded-xl border border-danger bg-danger-soft p-4 text-sm font-semibold text-danger" role="alert">
+              <p>{quoteError}</p>
+              <button
+                className="mt-3 min-h-11 cursor-pointer touch-manipulation rounded-xl border border-danger/40 bg-surface px-4 text-sm font-bold text-danger transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                onClick={retryQuote}
+                type="button"
+              >
+                Try again
+              </button>
+            </div>
+          ) : null}
+
           {!hasItems ? (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
               <span className="grid h-16 w-16 place-items-center rounded-full bg-fresh-soft text-fresh">
@@ -178,7 +277,7 @@ export function MiniCartDrawer() {
                 Shop groceries
               </button>
             </div>
-          ) : isLoading && !quote ? (
+          ) : isRefreshing && (!quote || visibleQuoteItems.length === 0) ? (
             <div className="space-y-4">
               {items.map((item) => (
                 <div className="flex gap-3" key={item.variantId}>
@@ -190,10 +289,25 @@ export function MiniCartDrawer() {
                 </div>
               ))}
             </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {quote?.items.map((item) => (
-                <li className="flex gap-3.5 py-4 first:pt-1" key={item.variantId}>
+          ) : quote && visibleQuoteItems.length > 0 ? (
+            <>
+              {isRefreshing ? (
+                <div className="mb-2 flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface-muted px-3 text-xs font-bold text-text-muted" role="status">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-fresh" aria-hidden="true" />
+                  Updating cart totals…
+                </div>
+              ) : null}
+              <ul className="divide-y divide-border">
+              {visibleQuoteItems.map((item) => {
+                const localItem = items.find((cartItem) => cartItem.variantId === item.variantId);
+                const renderedQuantity = currentQuote ? item.quantity : (localItem?.quantity ?? item.quantity);
+                const renderedLineTotal = currentQuote ? item.lineTotal : item.unitPrice * renderedQuantity;
+                const hasPendingStockAdjustment = Boolean(
+                  currentQuote && item.isAvailable && item.wasAdjusted && item.quantity !== item.requestedQuantity,
+                );
+
+                return (
+                <li className="flex gap-3 py-4 first:pt-1" key={item.variantId}>
                   <Link
                     className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted"
                     href={`/products/${item.product.slug}`}
@@ -202,11 +316,10 @@ export function MiniCartDrawer() {
                     {item.product.imageUrl ? (
                       <Image
                         alt={item.product.imageAlt}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain p-1.5"
                         fill
                         sizes="80px"
                         src={item.product.imageUrl}
-                        unoptimized
                       />
                     ) : null}
                   </Link>
@@ -224,7 +337,7 @@ export function MiniCartDrawer() {
                       </div>
                       <button
                         aria-label={`Remove ${item.product.name} from cart`}
-                        className="shrink-0 cursor-pointer rounded-full p-1 text-text-muted transition-colors hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                        className="grid h-11 w-11 shrink-0 cursor-pointer touch-manipulation place-items-center rounded-full text-text-muted transition-colors hover:bg-danger-soft hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
                         onClick={() => removeItem(item.variantId)}
                         type="button"
                       >
@@ -233,22 +346,23 @@ export function MiniCartDrawer() {
                     </div>
 
                     {item.isAvailable ? (
-                      <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                         <div className="inline-flex items-center rounded-full border border-border">
                           <button
-                            aria-label="Decrease quantity"
-                            className="grid h-8 w-8 cursor-pointer place-items-center rounded-l-full text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-                            onClick={() => updateQuantity(item.variantId, item.quantity - 1, item.stock)}
+                            aria-label={`Decrease quantity for ${item.product.name}`}
+                            className="grid h-11 w-11 cursor-pointer touch-manipulation place-items-center rounded-l-full text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={renderedQuantity <= 1}
+                            onClick={() => updateQuantity(item.variantId, renderedQuantity - 1, item.stock)}
                             type="button"
                           >
                             -
                           </button>
-                          <span className="min-w-8 text-center text-sm font-bold tabular-nums text-text">{item.quantity}</span>
+                          <span className="min-w-9 text-center text-sm font-bold tabular-nums text-text">{renderedQuantity}</span>
                           <button
-                            aria-label="Increase quantity"
-                            className="grid h-8 w-8 cursor-pointer place-items-center rounded-r-full text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:opacity-40"
-                            disabled={item.quantity >= item.stock}
-                            onClick={() => updateQuantity(item.variantId, item.quantity + 1, item.stock)}
+                            aria-label={`Increase quantity for ${item.product.name}`}
+                            className="grid h-11 w-11 cursor-pointer touch-manipulation place-items-center rounded-r-full text-text transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={renderedQuantity >= item.stock}
+                            onClick={() => updateQuantity(item.variantId, renderedQuantity + 1, item.stock)}
                             type="button"
                           >
                             +
@@ -256,11 +370,11 @@ export function MiniCartDrawer() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-extrabold tabular-nums text-text">
-                            {formatCurrency(item.lineTotal, item.currency)}
+                            {formatCurrency(renderedLineTotal, item.currency)}
                           </p>
                           {item.unitPrice < item.originalPrice ? (
                             <p className="text-xs font-semibold tabular-nums text-text-muted line-through">
-                              {formatCurrency(item.originalPrice * item.quantity, item.currency)}
+                              {formatCurrency(item.originalPrice * renderedQuantity, item.currency)}
                             </p>
                           ) : null}
                         </div>
@@ -268,26 +382,56 @@ export function MiniCartDrawer() {
                     ) : (
                       <p className="mt-2 text-xs font-bold text-danger">{item.reason ?? "Unavailable"}</p>
                     )}
+                    {currentQuote && item.isAvailable && item.reason ? (
+                      <div className="mt-2 rounded-xl border border-warning/40 bg-cta-soft p-2.5 text-xs font-bold leading-5 text-warning">
+                        <p>{item.reason}</p>
+                        {hasPendingStockAdjustment ? (
+                          <button
+                            className="mt-2 min-h-11 cursor-pointer touch-manipulation rounded-xl border border-warning/40 bg-surface px-3 text-xs font-extrabold text-warning transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                            onClick={() => acceptAdjustedQuantity(item)}
+                            type="button"
+                          >
+                            Update cart to {item.quantity}
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </li>
-              ))}
-            </ul>
-          )}
+                );
+              })}
+              </ul>
+            </>
+          ) : null}
         </div>
 
         {hasItems ? (
-          <div className="border-t border-border bg-background/60 px-5 py-4">
+          <div className="border-t border-border bg-background/60 pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-text-muted">Subtotal</span>
+              <span className="font-semibold text-text-muted">{isRefreshing ? "Updating subtotal" : "Subtotal"}</span>
               <span className="text-lg font-extrabold tabular-nums text-text">
-                {quote ? formatCurrency(quote.summary.subtotal, currency) : "Pending"}
+                {quote ? formatCurrency(quote.summary.subtotal, currency) : quoteError ? "Unavailable" : "Updating..."}
               </span>
             </div>
             <p className="mt-1 text-xs text-text-muted">Coupons and delivery are confirmed at checkout.</p>
+            {hasBlockingQuoteIssue ? (
+              <div className="mt-3 rounded-xl border border-warning bg-cta-soft p-3 text-xs font-bold leading-5 text-warning" role="status">
+                {quoteError
+                  ? "Refresh your cart before continuing to checkout."
+                  : quote
+                    ? "Resolve unavailable or adjusted items before checkout."
+                    : "Checking current prices and stock before checkout."}
+              </div>
+            ) : null}
             <div className="mt-4 grid gap-2">
               <button
-                className="a1-primary-button cursor-pointer px-5 text-sm"
+                className="a1-primary-button !min-h-12 cursor-pointer rounded-xl px-5 text-sm disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted disabled:shadow-none"
+                disabled={hasBlockingQuoteIssue}
                 onClick={() => {
+                  if (hasBlockingQuoteIssue) {
+                    return;
+                  }
+
                   close();
                   router.push("/checkout");
                 }}
@@ -296,7 +440,7 @@ export function MiniCartDrawer() {
                 Checkout securely
               </button>
               <button
-                className="a1-secondary-button cursor-pointer px-5 text-sm"
+                className="a1-secondary-button !min-h-12 cursor-pointer px-5 text-sm"
                 onClick={() => {
                   close();
                   router.push("/cart");
