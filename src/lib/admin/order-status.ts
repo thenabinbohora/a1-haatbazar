@@ -12,10 +12,15 @@ export const adminOrderStatusOptions = [
 
 export type AdminOrderStatus = (typeof adminOrderStatusOptions)[number];
 
+export const adminOrderFilterStatuses = [
+  ...adminOrderStatusOptions,
+  "REFUNDED",
+] as const satisfies readonly OrderStatus[];
+
 export const orderStatusLabels: Record<OrderStatus, string> = {
   PENDING: "Pending",
   CONFIRMED: "Confirmed",
-  PROCESSING: "Packed",
+  PROCESSING: "Preparing",
   READY_FOR_PICKUP: "Ready for pickup",
   OUT_FOR_DELIVERY: "Out for delivery",
   DELIVERED: "Delivered",

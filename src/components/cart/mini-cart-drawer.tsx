@@ -3,8 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/components/product/price";
+import { useDismissibleLayer } from "@/components/ui/overlay-provider";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalIsolation } from "@/hooks/use-modal-isolation";
+import { useResetOnNavigation } from "@/hooks/use-reset-on-navigation";
 import { useCart } from "@/store/cart-store";
 import { useCartDrawer } from "@/store/cart-drawer-store";
 
@@ -74,7 +78,30 @@ export function MiniCartDrawer() {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const shouldRestoreFocusRef = useRef(true);
+  const restoreScrollRef = useRef(true);
+  const shouldRestoreScroll = useCallback(() => restoreScrollRef.current, []);
   const router = useRouter();
+
+  const dismiss = useDismissibleLayer({
+    contentRef: panelRef,
+    kind: "drawer",
+    onDismiss: (reason) => {
+      restoreScrollRef.current = ![
+        "navigation",
+        "session-change",
+      ].includes(reason);
+      shouldRestoreFocusRef.current = ![
+        "another-layer",
+        "navigation",
+        "session-change",
+      ].includes(reason);
+      close();
+    },
+    open: isOpen,
+    restoreFocusOnDismiss: false,
+    triggerRef: returnFocusRef,
+  });
 
   const itemsKey = JSON.stringify(items.map((item) => [item.variantId, item.quantity]));
   const currentQuote = quoteState?.key === itemsKey ? quoteState.data : null;
@@ -92,6 +119,16 @@ export function MiniCartDrawer() {
     currentQuote.items.some(
       (item) => !item.isAvailable || item.wasAdjusted || item.quantity !== item.requestedQuantity,
     );
+
+  useBodyScrollLock(isOpen, shouldRestoreScroll);
+  useModalIsolation(isOpen, panelRef);
+  useResetOnNavigation(() => {
+    if (isOpen) {
+      shouldRestoreFocusRef.current = false;
+      restoreScrollRef.current = false;
+      close();
+    }
+  });
 
   useEffect(() => {
     if (!isOpen || !isReady || items.length === 0) {
@@ -133,19 +170,14 @@ export function MiniCartDrawer() {
       return;
     }
 
+    shouldRestoreFocusRef.current = true;
+    restoreScrollRef.current = true;
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousBodyOverflow = document.body.style.overflow;
     const focusFrame = window.requestAnimationFrame(() => {
       closeButtonRef.current?.focus();
     });
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        close();
-        return;
-      }
-
       if (event.key !== "Tab" || !panelRef.current) {
         return;
       }
@@ -174,15 +206,13 @@ export function MiniCartDrawer() {
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
 
     return () => {
       window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
 
       const returnTarget = returnFocusRef.current;
-      if (returnTarget?.isConnected) {
+      if (shouldRestoreFocusRef.current && returnTarget?.isConnected) {
         window.requestAnimationFrame(() => returnTarget.focus());
       }
     };
@@ -192,6 +222,11 @@ export function MiniCartDrawer() {
     setQuoteErrorState(null);
     setQuoteState((current) => (current?.key === itemsKey ? null : current));
     setQuoteRequestVersion((version) => version + 1);
+  }
+
+  function closeForNavigation() {
+    shouldRestoreFocusRef.current = false;
+    dismiss("navigation");
   }
 
   function acceptAdjustedQuantity(item: QuoteItem) {
@@ -210,11 +245,11 @@ export function MiniCartDrawer() {
   const currency = quote?.summary.currency ?? "AUD";
 
   return (
-    <div aria-hidden={false} className="fixed inset-0 z-50 h-[100dvh]">
+    <div aria-hidden={false} className="fixed inset-0 z-[var(--z-layer-drawer)] h-[100dvh]">
       <button
         aria-label="Close cart"
         className="a1-drawer-backdrop absolute inset-0 h-full w-full cursor-pointer bg-primary-muted/45 backdrop-blur-[2px]"
-        onClick={close}
+        onClick={() => dismiss("outside-pointer")}
         type="button"
       />
       <div
@@ -235,7 +270,7 @@ export function MiniCartDrawer() {
           <button
             aria-label="Close cart"
             className="grid h-12 w-12 shrink-0 cursor-pointer touch-manipulation place-items-center rounded-full border border-border text-text-muted transition-colors hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
-            onClick={close}
+            onClick={() => dismiss("action")}
             ref={closeButtonRef}
             type="button"
           >
@@ -269,8 +304,8 @@ export function MiniCartDrawer() {
               <button
                 className="a1-primary-button cursor-pointer px-6 text-sm"
                 onClick={() => {
-                  close();
-                  router.push("/products");
+                  closeForNavigation();
+                  router.push("/products", { scroll: true });
                 }}
                 type="button"
               >
@@ -311,7 +346,7 @@ export function MiniCartDrawer() {
                   <Link
                     className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted"
                     href={`/products/${item.product.slug}`}
-                    onClick={close}
+                    onClick={closeForNavigation}
                   >
                     {item.product.imageUrl ? (
                       <Image
@@ -329,7 +364,7 @@ export function MiniCartDrawer() {
                         <Link
                           className="line-clamp-2 text-sm font-bold leading-5 text-text transition-colors hover:text-cta-hover"
                           href={`/products/${item.product.slug}`}
-                          onClick={close}
+                          onClick={closeForNavigation}
                         >
                           {item.product.name}
                         </Link>
@@ -432,8 +467,8 @@ export function MiniCartDrawer() {
                     return;
                   }
 
-                  close();
-                  router.push("/checkout");
+                  closeForNavigation();
+                  router.push("/checkout", { scroll: true });
                 }}
                 type="button"
               >
@@ -442,8 +477,8 @@ export function MiniCartDrawer() {
               <button
                 className="a1-secondary-button !min-h-12 cursor-pointer px-5 text-sm"
                 onClick={() => {
-                  close();
-                  router.push("/cart");
+                  closeForNavigation();
+                  router.push("/cart", { scroll: true });
                 }}
                 type="button"
               >

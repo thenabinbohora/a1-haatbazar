@@ -40,7 +40,7 @@ export default async function AdminCategoriesPage({ searchParams }: CategoriesPa
 
       <AdminActionMessage error={params?.error} messages={messages} success={params?.success} />
 
-      <section className="mb-6 rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <section className="mb-6 rounded-lg border border-border bg-surface p-5 shadow-sm" id="new-category">
         <h2 className="text-lg font-semibold text-text">Create category</h2>
         <form action={createCategoryAction} className="mt-5 grid gap-4 lg:grid-cols-4">
           <label className="block">

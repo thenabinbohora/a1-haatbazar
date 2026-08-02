@@ -48,7 +48,10 @@ export function ProductCard({ product, variant = "standard", imagePriority = fal
   const productHref = `/products/${product.slug}`;
 
   return (
-    <article className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/90 bg-surface shadow-[0_8px_28px_rgba(24,38,27,0.07)] transition-[border-color,box-shadow] duration-200 hover:border-cta/35 hover:shadow-[0_16px_40px_rgba(24,38,27,0.12)] ${className}`}>
+    <article
+      className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/90 bg-surface shadow-[0_8px_28px_rgba(24,38,27,0.07)] transition-[border-color,box-shadow] duration-200 hover:border-cta/35 hover:shadow-[0_16px_40px_rgba(24,38,27,0.12)] ${className}`}
+      data-starting-price={product.startingPrice}
+    >
       <Link
         aria-label={`View ${product.name}`}
         className="relative block aspect-[4/3] overflow-hidden bg-surface-muted focus-visible:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cta"

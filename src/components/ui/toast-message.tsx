@@ -20,7 +20,7 @@ export function ToastMessage({ elevatedOnMobile = false, message, tone = "succes
 
   return (
     <div
-      className={`fixed left-4 right-4 z-50 mx-auto max-w-md rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg sm:left-auto sm:right-6 ${elevatedOnMobile ? "bottom-24 sm:bottom-6" : "bottom-4 sm:bottom-6"} ${toneClasses[tone]}`}
+      className={`fixed left-4 right-4 z-[var(--z-layer-alert)] mx-auto max-w-md rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg sm:left-auto sm:right-6 ${elevatedOnMobile ? "bottom-[calc(env(safe-area-inset-bottom)+6rem)] lg:bottom-6" : "bottom-4 sm:bottom-6"} ${toneClasses[tone]}`}
       role={tone === "error" ? "alert" : "status"}
     >
       {message}

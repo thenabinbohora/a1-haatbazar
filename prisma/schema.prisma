@@ -14,6 +14,36 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   DISABLED
+  DELETION_PENDING
+}
+
+enum CustomerAuthMethod {
+  PASSWORD
+  EMAIL_OTP
+  OAUTH
+}
+
+enum AccountDeletionStatus {
+  PENDING
+  CLEANUP_COMPLETE
+  COMPLETED
+  FAILED
+}
+
+enum SecurityEventType {
+  PASSWORD_CHANGE_STARTED
+  PASSWORD_CHANGE_SUCCEEDED
+  PASSWORD_CHANGE_FAILED
+  PASSWORD_SESSIONS_REVOKED
+  DELETION_VERIFICATION_FAILED
+  DELETION_REQUESTED
+  DELETION_CLEANUP_COMPLETED
+  DELETION_SESSIONS_REVOKED
+  DELETION_AUTH_USER_DELETED
+  DELETION_COMPLETED
+  DELETION_FAILED
+  SECURITY_NOTIFICATION_SENT
+  SECURITY_NOTIFICATION_FAILED
 }
 
 enum ProductStatus {
@@ -100,24 +130,26 @@ enum InventoryReason {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  phone         String?
-  role          UserRole       @default(CUSTOMER)
-  status        UserStatus     @default(ACTIVE)
-  passwordHash  String?
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  addresses     Address[]
-  carts         Cart[]
-  wishlist      Wishlist[]
-  orders        Order[]
-  inventoryLogs InventoryLog[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                 String              @id @default(cuid())
+  supabaseAuthUserId String?             @unique
+  authMethod         CustomerAuthMethod?
+  email              String              @unique
+  name               String?
+  phone              String?
+  role               UserRole            @default(CUSTOMER)
+  status             UserStatus          @default(ACTIVE)
+  passwordHash       String?
+  emailVerified      DateTime?
+  image              String?
+  accounts           Account[]
+  sessions           Session[]
+  addresses          Address[]
+  carts              Cart[]
+  wishlist           Wishlist[]
+  orders             Order[]
+  inventoryLogs      InventoryLog[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([role])
   @@index([status])
@@ -331,7 +363,7 @@ model Wishlist {
 model Order {
   id              String          @id @default(cuid())
   orderNumber     String          @unique
-  userId          String
+  userId          String?
   addressId       String?
   couponId        String?
   status          OrderStatus     @default(PENDING)
@@ -346,7 +378,7 @@ model Order {
   customerEmail   String
   customerPhone   String?
   notes           String?
-  user            User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   address         Address?        @relation(fields: [addressId], references: [id], onDelete: SetNull)
   coupon          Coupon?         @relation(fields: [couponId], references: [id], onDelete: SetNull)
   items           OrderItem[]
@@ -354,8 +386,55 @@ model Order {
   updatedAt       DateTime        @updatedAt
 
   @@index([userId, createdAt])
+  @@index([addressId])
   @@index([status, createdAt])
   @@index([couponId])
+}
+
+model AccountDeletionRequest {
+  id                 String                @id @default(cuid())
+  eventId            String                @unique
+  subjectHash        String?               @unique
+  appUserId          String?
+  supabaseAuthUserId String?
+  status             AccountDeletionStatus @default(PENDING)
+  failureStage       String?
+  attemptCount       Int                   @default(0)
+  cleanupCompletedAt DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([appUserId])
+  @@index([supabaseAuthUserId])
+}
+
+model SecurityAuditEvent {
+  id          String            @id @default(cuid())
+  eventId     String
+  requestId   String?
+  subjectHash String?
+  ipHash      String?
+  event       SecurityEventType
+  outcome     String
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+
+  @@index([eventId, createdAt])
+  @@index([requestId, createdAt])
+  @@index([event, createdAt])
+}
+
+model SecurityRateLimit {
+  keyHash      String    @id
+  attempts     Int       @default(0)
+  windowStart  DateTime  @default(now())
+  blockedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([updatedAt])
 }
 
 model OrderItem {

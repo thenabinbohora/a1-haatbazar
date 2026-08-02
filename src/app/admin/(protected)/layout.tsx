@@ -1,4 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
+import { getAdminShellSummary } from "@/lib/admin/dashboard-data";
 import { requireAdmin } from "@/lib/auth";
 
 export default async function ProtectedAdminLayout({
@@ -7,6 +8,11 @@ export default async function ProtectedAdminLayout({
   children: React.ReactNode;
 }>) {
   const user = await requireAdmin();
+  const summary = await getAdminShellSummary();
 
-  return <AdminShell user={user}>{children}</AdminShell>;
+  return (
+    <AdminShell summary={summary} user={user}>
+      {children}
+    </AdminShell>
+  );
 }

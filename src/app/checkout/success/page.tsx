@@ -125,8 +125,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
               <section className="rounded-xl border border-border bg-surface-muted p-5">
                 <h2 className="text-xl font-bold text-text">Customer contact</h2>
                 <div className="mt-3 text-sm leading-6 text-text-muted">
-                  <p className="font-bold text-text">{order?.user.name ?? "Customer"}</p>
-                  <p>{order?.customerEmail ?? order?.user.email ?? "Email unavailable"}</p>
+                  <p className="font-bold text-text">{order?.user?.name ?? "Customer"}</p>
+                  <p>{order?.customerEmail ?? order?.user?.email ?? "Email unavailable"}</p>
                   {order?.customerPhone ? <p>{order.customerPhone}</p> : null}
                 </div>
               </section>

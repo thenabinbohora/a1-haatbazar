@@ -19,6 +19,7 @@ function createPrismaClient() {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Next can evaluate shared server modules from multiple route bundles in one
+// production process. Keep one adapter/pool per process in every environment
+// so route-heavy navigation cannot exhaust PostgreSQL connections.
+globalForPrisma.prisma = prisma;

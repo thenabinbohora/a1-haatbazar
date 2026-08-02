@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
+import { isUnmodifiedPrimaryClick, scrollDocumentToTop } from "@/lib/client-navigation";
 import { useCart } from "@/store/cart-store";
 import { useCartDrawer } from "@/store/cart-drawer-store";
 
@@ -15,6 +17,8 @@ export function shouldShowMobileTabBar(pathname: string | null) {
     /^\/products\/[^/]+$/.test(pathname) ||
     pathname.startsWith("/checkout") ||
     pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
     pathname === "/reset-password"
   ) {
     return false;
@@ -97,13 +101,47 @@ export function MobileTabBar() {
     return null;
   }
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : Boolean(pathname?.startsWith(href)));
+  const isShopRoute =
+    pathname === "/products" ||
+    pathname === "/categories" ||
+    pathname === "/offers" ||
+    pathname === "/featured" ||
+    pathname === "/best-sellers" ||
+    Boolean(pathname?.startsWith("/category/")) ||
+    pathname === "/search";
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    if (href === "/products") {
+      return isShopRoute;
+    }
+
+    return Boolean(pathname?.startsWith(href));
+  };
   const isCartActive = pathname?.startsWith("/cart") ?? false;
+
+  function handleActiveTopLevelTab(event: MouseEvent<HTMLAnchorElement>, href: string) {
+    const isExactActiveTab = (href === "/" && pathname === "/") || (href === "/products" && pathname === "/products");
+
+    if (
+      !isExactActiveTab ||
+      window.location.search ||
+      window.location.hash ||
+      !isUnmodifiedPrimaryClick(event)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    scrollDocumentToTop({ smooth: href === "/" });
+  }
 
   return (
     <nav
       aria-label="Bottom navigation"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] xl:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-layer-bottom-nav)] pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] xl:hidden"
     >
       <div className="pointer-events-auto mx-auto flex h-[3.75rem] max-w-xl items-stretch rounded-2xl border border-border bg-surface/96 px-1 shadow-[0_14px_42px_rgba(18,60,46,0.18)] backdrop-blur-xl">
         {tabs.map((tab) =>
@@ -137,7 +175,9 @@ export function MobileTabBar() {
               className={tabClass(isActive(tab.href))}
               href={tab.href}
               key={tab.label}
+              onClick={(event) => handleActiveTopLevelTab(event, tab.href)}
               prefetch={false}
+              scroll
             >
               <span className={iconWrapClass(isActive(tab.href))}>
                 <TabIcon type={tab.icon as "home" | "shop" | "wishlist" | "account"} />

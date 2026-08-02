@@ -302,7 +302,10 @@ export function LegalPage({ document, related, sections }: LegalPageProps) {
             </nav>
           </article>
 
-          <aside className="legal-screen-only sticky top-28 hidden rounded-2xl border border-border bg-surface p-4 shadow-sm lg:block">
+          <aside
+            className="legal-screen-only sticky hidden rounded-2xl border border-border bg-surface p-4 shadow-sm lg:block"
+            style={{ top: "calc(var(--site-header-offset) + 1rem)" }}
+          >
             <TableOfContents label={`${document.title} contents`} sections={sections} />
           </aside>
         </div>

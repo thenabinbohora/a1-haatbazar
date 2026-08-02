@@ -48,6 +48,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/account/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
+        ],
+      },
+      {
+        source: "/account-deleted",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: securityHeaders,
       },

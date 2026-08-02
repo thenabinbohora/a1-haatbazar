@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { CategoryCard } from "@/components/category/category-card";
+import {
+  HomeCategoryCardsSkeleton,
+  HomeProductGridSkeleton,
+  HomeWeeklyOffersSkeleton,
+} from "@/components/home/home-skeletons";
 import { JsonLd } from "@/components/seo/json-ld";
 import { APP_NAME, BRAND_LOGO_SRC, SUPPORT_EMAIL } from "@/lib/constants";
 import { absoluteUrl, getSiteUrl } from "@/lib/site";
@@ -157,15 +163,30 @@ function LocationIcon({ type }: { type: "pin" | "clock" | "pickup" | "truck" | "
 }
 
 function HeroVisual() {
+  const heroImageProps = getImageProps({
+    alt: "A1 Haat Bazar grocery spread with rice, spices, fresh vegetables, tea, snacks, and momos",
+    className: "h-full w-full object-cover",
+    fetchPriority: "high",
+    fill: true,
+    loading: "eager",
+    sizes: "(max-width: 1023px) calc(100vw - 48px), (max-width: 1279px) 48vw, 620px",
+    src: "/brand/a1-pantry-hero.webp",
+  }).props;
+
   return (
     <div className="a1-reveal relative hidden h-[360px] overflow-hidden rounded-2xl border border-primary/10 bg-surface shadow-xl shadow-primary/10 md:block lg:h-full lg:min-h-[560px]">
-      <Image
-        alt="A1 Haat Bazar grocery spread with rice, spices, fresh vegetables, tea, snacks, and momos"
-        className="h-full w-full object-cover"
-        fill
-        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 48px), 48vw"
-        src="/brand/a1-pantry-hero.webp"
-      />
+      <picture>
+        <source media="(min-width: 768px)" sizes={heroImageProps.sizes} srcSet={heroImageProps.srcSet} />
+        <img
+          alt={heroImageProps.alt}
+          className={heroImageProps.className}
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          style={heroImageProps.style}
+        />
+      </picture>
       <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/5 to-transparent lg:bg-gradient-to-r lg:from-primary/30 lg:via-transparent lg:to-transparent" />
       <div className="absolute inset-x-0 bottom-0 z-10 p-3 sm:p-6 lg:p-7">
         <div className="max-w-md rounded-xl border border-white/25 bg-surface/95 p-3 shadow-lg backdrop-blur sm:rounded-2xl sm:p-5">
@@ -393,35 +414,39 @@ function TrustSection() {
       description: "See clear stock status before adding items to your cart.",
       icon: "stock",
       label: "Updated regularly",
+      mobileLabel: "Updated Regularly",
       title: "Fresh stock updated regularly",
     },
     {
       description: "Choose delivery at checkout and we'll confirm details with you.",
       icon: "delivery",
       label: "Local service",
+      mobileLabel: "Local Service",
       title: "Local delivery",
     },
     {
       description: "Pickup is free. We'll let you know when your order is ready.",
       icon: "pickup",
       label: "Free pickup",
+      mobileLabel: "Free Pickup",
       title: "Free store pickup",
     },
     {
       description: "Save addresses, orders, and wishlist items securely.",
       icon: "secure",
       label: "Private & secure",
+      mobileLabel: "Private and Secure",
       title: "Secure account",
     },
   ] as const;
 
   return (
     <section className="bg-background">
-      <div className="a1-section-reveal mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-6 lg:px-8 lg:py-16">
-        <div className="relative overflow-hidden rounded-2xl bg-primary px-4 py-6 text-white shadow-xl shadow-primary/15 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
+      <div className="a1-section-reveal mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:px-8 lg:py-16">
+        <div className="relative overflow-hidden rounded-2xl bg-primary px-4 py-5 text-white shadow-xl shadow-primary/15 lg:px-10 lg:py-10">
           <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cta/20 blur-3xl" aria-hidden="true" />
           <div className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-fresh/30 blur-3xl" aria-hidden="true" />
-          <div className="relative grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+          <div className="relative grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-center lg:gap-8">
             <div>
               <p className="max-w-full text-sm font-extrabold uppercase leading-5 tracking-[0.12em] text-cta-soft">
                 Why shop with A1 Haat Bazar?
@@ -429,7 +454,7 @@ function TrustSection() {
               <h2 className="mt-2 text-2xl font-extrabold leading-tight sm:mt-3 sm:text-4xl">
                 A local grocery experience built around confidence.
               </h2>
-              <p className="mt-4 hidden max-w-xl text-base leading-7 text-white/75 sm:block">
+              <p className="mt-4 hidden max-w-xl text-base leading-7 text-white/75 lg:block">
                 Clear stock, practical fulfilment options, and familiar groceries make every basket easier to plan.
               </p>
             </div>
@@ -437,17 +462,31 @@ function TrustSection() {
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
               {trustCards.map((card) => (
                 <article
-                  className="group rounded-2xl border border-white/15 bg-white/10 p-3 transition-colors duration-200 hover:bg-white/15 motion-reduce:transition-none sm:p-5 sm:backdrop-blur-sm"
+                  aria-labelledby={`trust-${card.icon}-title`}
+                  className="group h-[5.75rem] min-w-0 rounded-2xl border border-white/15 bg-white/10 p-2 transition-colors duration-200 hover:bg-white/15 motion-reduce:transition-none lg:h-auto lg:p-5 lg:backdrop-blur-sm"
                   key={card.title}
                 >
-                  <div className="flex flex-col items-start gap-2.5 sm:flex-row sm:gap-3.5">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cta-soft text-cta-hover shadow-sm sm:h-11 sm:w-11">
+                  <div className="flex h-full flex-col items-start justify-center gap-1.5 lg:h-auto lg:flex-row lg:justify-start lg:gap-3.5">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cta-soft text-cta-hover shadow-sm lg:h-11 lg:w-11">
                       <TrustIcon type={card.icon} />
                     </span>
                     <div className="min-w-0">
-                      <p className="hidden text-sm font-extrabold uppercase tracking-[0.08em] text-cta-soft sm:block">{card.label}</p>
-                      <h3 className="text-sm font-extrabold leading-5 text-white sm:mt-1 sm:text-lg sm:leading-6">{card.title}</h3>
-                      <p className="mt-1 hidden text-sm leading-6 text-white/70 sm:block">{card.description}</p>
+                      <p className="hidden text-sm font-extrabold uppercase tracking-[0.08em] text-cta-soft lg:block">{card.label}</p>
+                      <h3
+                        className="text-xs font-bold uppercase leading-4 tracking-[0.03em] text-cta-soft lg:mt-1 lg:text-lg lg:font-extrabold lg:normal-case lg:leading-6 lg:tracking-normal lg:text-white"
+                        id={`trust-${card.icon}-title`}
+                      >
+                        <span
+                          className={[
+                            "block lg:hidden",
+                            card.icon === "secure" ? "text-balance" : "whitespace-nowrap",
+                          ].join(" ")}
+                        >
+                          {card.mobileLabel}
+                        </span>
+                        <span className="hidden lg:inline">{card.title}</span>
+                      </h3>
+                      <p className="mt-1 hidden text-sm leading-6 text-white/70 lg:block">{card.description}</p>
                     </div>
                   </div>
                 </article>
@@ -460,19 +499,97 @@ function TrustSection() {
   );
 }
 
-export default async function HomePage() {
-  const [categories, featuredProducts, bestSellers, weeklyOffers, freshVegetables, banners] = await Promise.all([
-    getHomeFeaturedCategories(),
-    getPublicProducts({}, { featured: true, take: 4 }),
-    getPublicProducts({ sort: "popular" }, { bestSeller: true, take: 4 }),
-    getPublicProducts({ inStock: "on", sale: "on", sort: "offers" }, { weeklyOffer: true, take: 8 }),
-    getPublicProducts({}, { categorySlug: "vegetables", take: 4 }),
-    getActiveHomeBanners(),
-  ]);
+async function HomeCategoryCards() {
+  const categories = await getHomeFeaturedCategories();
 
-  const stripBanner = banners.find((banner) => banner.placement === "HOME_STRIP");
+  return (
+    <>
+      {categories.map((category) => (
+        <CategoryCard
+          category={category}
+          imageSizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 292px"
+          key={category.id}
+        />
+      ))}
+    </>
+  );
+}
+
+async function HomeWeeklyOffers() {
+  const weeklyOffers = await getPublicProducts(
+    { inStock: true, sale: true, sort: "biggest-saving" },
+    { weeklyOffer: true, take: 8 },
+  );
   const activeWeeklyOffers = weeklyOffers.filter((product) => product.isWeeklyOffer && product.isOnSale);
 
+  return <WeeklyOffersCarousel products={activeWeeklyOffers} />;
+}
+
+async function HomeStripBanner() {
+  const banners = await getActiveHomeBanners();
+  const stripBanner = banners.find((banner) => banner.placement === "HOME_STRIP");
+
+  if (!stripBanner) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+      <Link
+        className="group flex flex-col gap-4 rounded-2xl border border-cta/25 bg-cta-soft p-5 shadow-sm transition-[border-color,box-shadow] hover:border-cta/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:flex-row sm:items-center sm:justify-between sm:p-6"
+        href={stripBanner.linkUrl ?? "/offers"}
+        prefetch={false}
+      >
+        <div>
+          <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">Store offer</p>
+          <h2 className="mt-1.5 text-2xl font-extrabold text-text sm:text-3xl">{stripBanner.title}</h2>
+          {stripBanner.subtitle ? <p className="mt-2 text-base text-text-muted">{stripBanner.subtitle}</p> : null}
+        </div>
+        <span className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-sm font-extrabold text-white transition-colors group-hover:bg-primary-muted">
+          Explore offer
+          <svg aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </span>
+      </Link>
+    </section>
+  );
+}
+
+async function HomeFreshProducts() {
+  const freshVegetables = await getPublicProducts({}, { categorySlug: "vegetables", take: 4 });
+
+  return (
+    <ProductGrid
+      emptyTitle="Fresh vegetables coming soon"
+      priorityImageCount={0}
+      products={freshVegetables}
+      variant="compactGrid"
+    />
+  );
+}
+
+async function HomeFeaturedProducts() {
+  const featuredProducts = await getPublicProducts({}, { featured: true, take: 4 });
+
+  return <ProductGrid priorityImageCount={0} products={featuredProducts} variant="featuredGrid" />;
+}
+
+async function HomeBestSellers() {
+  const bestSellers = await getPublicProducts({ sort: "best-selling" }, { bestSeller: true, take: 4 });
+
+  return (
+    <ProductGrid
+      emptyTitle="No best sellers yet"
+      priorityImageCount={0}
+      products={bestSellers}
+      variant="bestSellersGrid"
+    />
+  );
+}
+
+export default function HomePage() {
   return (
     <div className="overflow-x-clip bg-background">
       <JsonLd data={groceryStoreSchema} />
@@ -522,7 +639,7 @@ export default async function HomePage() {
               </Link>
               <Link
                 className="a1-secondary-button min-h-12 px-5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:px-7"
-                href="/products?sale=on"
+                href="/offers"
                 prefetch={false}
               >
                 <span className="md:hidden">Weekly offers</span>
@@ -553,13 +670,9 @@ export default async function HomePage() {
             />
           </div>
           <div className="order-2 grid min-w-0 auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:col-span-2 lg:row-start-2">
-            {categories.map((category) => (
-              <CategoryCard
-                category={category}
-                imageSizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 292px"
-                key={category.id}
-              />
-            ))}
+            <Suspense fallback={<HomeCategoryCardsSkeleton />}>
+              <HomeCategoryCards />
+            </Suspense>
           </div>
           <SectionViewAllLink
             accessibleLabel="View all grocery categories"
@@ -569,30 +682,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <WeeklyOffersCarousel products={activeWeeklyOffers} />
+      <Suspense fallback={<HomeWeeklyOffersSkeleton />}>
+        <HomeWeeklyOffers />
+      </Suspense>
 
-      {stripBanner ? (
-        <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8">
-          <Link
-            className="group flex flex-col gap-4 rounded-2xl border border-cta/25 bg-cta-soft p-5 shadow-sm transition-[border-color,box-shadow] hover:border-cta/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:flex-row sm:items-center sm:justify-between sm:p-6"
-            href={stripBanner.linkUrl ?? "/products?sale=on"}
-            prefetch={false}
-          >
-            <div>
-              <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-cta-hover">Store offer</p>
-              <h2 className="mt-1.5 text-2xl font-extrabold text-text sm:text-3xl">{stripBanner.title}</h2>
-              {stripBanner.subtitle ? <p className="mt-2 text-base text-text-muted">{stripBanner.subtitle}</p> : null}
-            </div>
-            <span className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-sm font-extrabold text-white transition-colors group-hover:bg-primary-muted">
-              Explore offer
-              <svg aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </span>
-          </Link>
-        </section>
-      ) : null}
+      <Suspense fallback={null}>
+        <HomeStripBanner />
+      </Suspense>
 
       <section className="bg-surface-muted">
         <div className="mx-auto max-w-7xl px-4 pb-4 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:py-16">
@@ -625,7 +721,7 @@ export default async function HomePage() {
                 </Link>
                 <Link
                   className="a1-fresh-banner-secondary hidden min-h-12 items-center justify-center rounded-xl border px-5 text-sm backdrop-blur-sm sm:inline-flex"
-                  href="/products?freshVegetables=on&inStock=on"
+                  href="/category/vegetables?inStock=true"
                   prefetch={false}
                 >
                   View today&apos;s produce
@@ -643,7 +739,9 @@ export default async function HomePage() {
                 />
               </div>
               <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
-                <ProductGrid emptyTitle="Fresh vegetables coming soon" priorityImageCount={0} products={freshVegetables} variant="compactGrid" />
+                <Suspense fallback={<HomeProductGridSkeleton variant="fresh" />}>
+                  <HomeFreshProducts />
+                </Suspense>
               </div>
               <SectionViewAllLink
                 accessibleLabel="View all fresh vegetables"
@@ -666,11 +764,13 @@ export default async function HomePage() {
               />
             </div>
             <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
-              <ProductGrid priorityImageCount={0} products={featuredProducts} variant="featuredGrid" />
+              <Suspense fallback={<HomeProductGridSkeleton variant="featured" />}>
+                <HomeFeaturedProducts />
+              </Suspense>
             </div>
             <SectionViewAllLink
               accessibleLabel="View all featured products"
-              href="/products?sort=popular"
+              href="/featured"
               label="View all featured products"
             />
           </div>
@@ -688,16 +788,13 @@ export default async function HomePage() {
               />
             </div>
             <div className="order-2 min-w-0 lg:col-span-2 lg:row-start-2">
-              <ProductGrid
-                emptyTitle="No best sellers yet"
-                priorityImageCount={0}
-                products={bestSellers}
-                variant="bestSellersGrid"
-              />
+              <Suspense fallback={<HomeProductGridSkeleton variant="best-sellers" />}>
+                <HomeBestSellers />
+              </Suspense>
             </div>
             <SectionViewAllLink
               accessibleLabel="View all best sellers"
-              href="/products?sort=popular"
+              href="/best-sellers"
               label="View all best sellers"
             />
           </div>

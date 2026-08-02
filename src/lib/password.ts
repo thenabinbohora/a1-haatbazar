@@ -4,6 +4,7 @@ import { promisify } from "node:util";
 const scryptAsync = promisify(scrypt);
 const KEY_LENGTH = 64;
 const SALT_LENGTH = 16;
+const DUMMY_PASSWORD_HASH = `scrypt:${"0".repeat(SALT_LENGTH * 2)}:${"0".repeat(KEY_LENGTH * 2)}`;
 
 export async function hashPassword(password: string) {
   const salt = randomBytes(SALT_LENGTH).toString("hex");
@@ -13,11 +14,7 @@ export async function hashPassword(password: string) {
 }
 
 export async function verifyPassword(password: string, storedHash: string | null | undefined) {
-  if (!storedHash) {
-    return false;
-  }
-
-  const [scheme, salt, storedKey] = storedHash.split(":");
+  const [scheme, salt, storedKey] = (storedHash ?? DUMMY_PASSWORD_HASH).split(":");
 
   if (scheme !== "scrypt" || !salt || !storedKey) {
     return false;
@@ -30,7 +27,7 @@ export async function verifyPassword(password: string, storedHash: string | null
     return false;
   }
 
-  return timingSafeEqual(storedBuffer, derivedKey);
+  return Boolean(storedHash) && timingSafeEqual(storedBuffer, derivedKey);
 }
 
 export function isStrongSeedPassword(password: string) {
@@ -42,4 +39,3 @@ export function isStrongSeedPassword(password: string) {
     /[^A-Za-z0-9]/.test(password)
   );
 }
-

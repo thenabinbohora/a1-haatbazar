@@ -3,9 +3,14 @@ import { loadLocalEnv } from "./load-local-env";
 loadLocalEnv();
 
 async function main() {
-  const [{ prisma }, { hashPassword, isStrongSeedPassword }] = await Promise.all([
+  const [
+    { prisma },
+    { hashPassword, isStrongSeedPassword },
+    { createScriptSupabaseAdminClient, ensureScriptAuthUser },
+  ] = await Promise.all([
     import("../src/lib/prisma"),
     import("../src/lib/password"),
+    import("./supabase-admin"),
   ]);
   const email = process.env.TEST_CUSTOMER_EMAIL?.trim().toLowerCase();
   const password = process.env.TEST_CUSTOMER_PASSWORD ?? "";
@@ -22,6 +27,20 @@ async function main() {
   }
 
   const passwordHash = await hashPassword(password);
+  const supabaseUser = await ensureScriptAuthUser({
+    email,
+    name,
+    password,
+  });
+  const admin = createScriptSupabaseAdminClient();
+  const { error: authPasswordError } = await admin.auth.admin.updateUserById(
+    supabaseUser.id,
+    { password },
+  );
+
+  if (authPasswordError) {
+    throw new Error("The Supabase test credential could not be synchronised.");
+  }
 
   await prisma.user.upsert({
     where: {
@@ -29,16 +48,20 @@ async function main() {
     },
     update: {
       name,
+      authMethod: "PASSWORD",
       passwordHash,
       role: "CUSTOMER",
       status: "ACTIVE",
+      supabaseAuthUserId: supabaseUser.id,
     },
     create: {
       email,
       name,
+      authMethod: "PASSWORD",
       passwordHash,
       role: "CUSTOMER",
       status: "ACTIVE",
+      supabaseAuthUserId: supabaseUser.id,
     },
   });
 

@@ -5,14 +5,12 @@ import {
   getCategoryBySlug,
   getPublicProducts,
   getStorefrontFilters,
-  normalizeStorefrontSearchParams,
 } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -44,22 +42,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const [{ slug }, rawSearchParams] = await Promise.all([params, searchParams]);
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { slug } = await params;
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
   }
 
-  const query = normalizeStorefrontSearchParams(rawSearchParams);
-  const [products, filters] = await Promise.all([
-    getPublicProducts(query, { categorySlug: category.slug }),
-    getStorefrontFilters(),
+  const [filters, products] = await Promise.all([
+    getStorefrontFilters({ categorySlug: category.slug }),
+    getPublicProducts(
+      { sort: "newest" },
+      { categorySlug: category.slug },
+    ),
   ]);
-
   return (
     <ProductListingShell
+      basePath={`/category/${category.slug}`}
       categoryLinks={category.children}
       description={category.description ?? `Browse ${category.name} groceries with current stock, offers, and variant pricing.`}
       eyebrow="Category"
@@ -67,7 +67,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       lockedCategorySlug={category.slug}
       products={products}
       title={category.name}
-      values={query}
     />
   );
 }

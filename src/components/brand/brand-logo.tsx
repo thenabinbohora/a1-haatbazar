@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
 import { APP_NAME, BRAND_ICON_SRC, BRAND_LOGO_SRC } from "@/lib/constants";
+import { isUnmodifiedPrimaryClick, scrollDocumentToTop } from "@/lib/client-navigation";
 
 type BrandLogoProps = {
   href?: string;
@@ -10,7 +15,23 @@ type BrandLogoProps = {
 };
 
 export function BrandLogo({ href = "/", variant = "light", compact = false, display = "lockup" }: BrandLogoProps) {
+  const pathname = usePathname();
   const logoDisplay = compact ? "mark" : display;
+
+  function handleHomeClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      href !== "/" ||
+      pathname !== "/" ||
+      window.location.search ||
+      window.location.hash ||
+      !isUnmodifiedPrimaryClick(event)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    scrollDocumentToTop({ smooth: true });
+  }
 
   const mark = (
     <span className="block shrink-0 overflow-hidden rounded-full shadow-sm ring-1 ring-cta/45">
@@ -57,7 +78,9 @@ export function BrandLogo({ href = "/", variant = "light", compact = false, disp
       aria-label={`${APP_NAME} home`}
       className="group flex min-h-11 w-fit shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cta"
       href={href}
+      onClick={handleHomeClick}
       prefetch={false}
+      scroll
     >
       {logoDisplay === "full" ? fullLogo : null}
       {logoDisplay === "mark" ? mark : null}

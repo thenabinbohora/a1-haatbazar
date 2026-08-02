@@ -33,3 +33,10 @@ export const customerAddressSchema = z.object({
   country: z.string().trim().min(2).max(80).default("Australia"),
   isDefault: z.boolean().default(false),
 });
+
+export const customerProfileSchema = z.object({
+  name: z.string().trim().min(2, "Enter your full name.").max(120),
+  phone: optionalText.pipe(
+    z.string().max(40, "Enter a shorter phone number.").optional(),
+  ),
+});

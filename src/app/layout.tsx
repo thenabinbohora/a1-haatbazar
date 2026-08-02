@@ -80,9 +80,12 @@ export default async function RootLayout({
   return (
     <html className={`${inter.variable} ${plusJakarta.variable}`} data-scroll-behavior="smooth" lang="en">
       <body>
-        <div className="flex min-h-dvh flex-col">
-          <SiteShell isAuthenticated={user?.role === "CUSTOMER" || user?.role === "ADMIN"}>{children}</SiteShell>
-        </div>
+        <SiteShell
+          isAuthenticated={user?.role === "CUSTOMER"}
+          sessionKey={user?.id ?? "guest"}
+        >
+          {children}
+        </SiteShell>
       </body>
     </html>
   );

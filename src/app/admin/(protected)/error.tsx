@@ -7,11 +7,9 @@ type AdminErrorProps = {
   reset: () => void;
 };
 
-export default function AdminError({ error, reset }: AdminErrorProps) {
-  console.error(error);
-
+export default function AdminError({ reset }: AdminErrorProps) {
   return (
-    <section className="min-h-[calc(100vh-73px)] border-t border-border bg-surface-muted px-4 py-6 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-3xl py-10">
       <AdminErrorState
         description="The admin area hit an unexpected error. No changes were made."
         onRetry={reset}

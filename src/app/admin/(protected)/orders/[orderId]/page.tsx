@@ -100,7 +100,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: Adm
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <div>
               <p className="text-sm font-semibold uppercase text-text-muted">Bill to</p>
-              <p className="mt-2 font-bold text-text">{order.user.name ?? "Customer"}</p>
+              <p className="mt-2 font-bold text-text">{order.user?.name ?? "Former customer"}</p>
               <p className="text-sm text-text-muted">{order.customerEmail}</p>
               {order.customerPhone ? <p className="text-sm text-text-muted">{order.customerPhone}</p> : null}
             </div>
@@ -164,7 +164,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: Adm
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="rounded-md border border-border bg-surface-muted p-4">
                   <p className="text-xs font-semibold uppercase text-text-muted">Customer</p>
-                  <p className="mt-2 font-bold text-text">{order.user.name ?? "Customer"}</p>
+                  <p className="mt-2 font-bold text-text">{order.user?.name ?? "Former customer"}</p>
                   <p className="text-sm text-text-muted">{order.customerEmail}</p>
                   {order.customerPhone ? <p className="text-sm text-text-muted">{order.customerPhone}</p> : null}
                 </div>

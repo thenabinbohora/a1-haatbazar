@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { CartNavLink } from "@/components/cart/cart-nav-link";
 import { shouldShowMobileTabBar } from "@/components/layout/mobile-tab-bar";
@@ -10,7 +11,9 @@ import { STORE_CONFIG } from "@/config/store";
 
 const aisleLinks = [
   { href: "/products", label: "Shop all" },
-  { href: "/products?sale=on", label: "Weekly offers" },
+  { href: "/offers", label: "Weekly offers" },
+  { href: "/featured", label: "Featured products" },
+  { href: "/best-sellers", label: "Best sellers" },
   { href: "/category/vegetables", label: "Fresh vegetables" },
   { href: "/category/rice-and-grains", label: "Rice & grains" },
   { href: "/category/lentils-and-beans", label: "Lentils & beans" },
@@ -18,19 +21,8 @@ const aisleLinks = [
   { href: "/category/frozen-items", label: "Frozen" },
 ] as const;
 
-function isActivePath(pathname: string | null, searchParams: URLSearchParams, href: string) {
-  const [path, query] = href.split("?");
-
-  if (query) {
-    const hrefParams = new URLSearchParams(query);
-    return pathname === path && Array.from(hrefParams).every(([key, value]) => searchParams.get(key) === value);
-  }
-
-  if (path === "/products" && searchParams.get("sale") === "on") {
-    return false;
-  }
-
-  return pathname === path || Boolean(pathname?.startsWith(`${path}/`));
+function isActivePath(pathname: string | null, href: string) {
+  return pathname === href || Boolean(pathname?.startsWith(`${href}/`));
 }
 
 function HeaderIcon({ type }: { type: "heart" | "user" | "pin" | "clock" }) {
@@ -69,6 +61,7 @@ function AccountAction({ href, icon, label }: { href: string; icon: "heart" | "u
       className="group inline-flex min-h-11 items-center gap-2 rounded-xl px-2.5 text-sm font-bold text-text-muted transition-colors hover:bg-fresh-soft hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
       href={href}
       prefetch={false}
+      scroll
     >
       <span className="grid h-8 w-8 place-items-center rounded-full bg-surface-muted text-primary transition-colors group-hover:bg-white">
         <HeaderIcon type={icon} />
@@ -78,17 +71,98 @@ function AccountAction({ href, icon, label }: { href: string; icon: "heart" | "u
   );
 }
 
-export function Header() {
-  const pathname = usePathname();
+function HeaderSearchFallback({
+  mobile = false,
+  placeholder,
+}: {
+  mobile?: boolean;
+  placeholder: string;
+}) {
+  return (
+    <form
+      action="/search#product-results"
+      className="relative z-30 min-w-0"
+      role="search"
+    >
+      <label className="sr-only" htmlFor={mobile ? "mobile-header-search-fallback" : "desktop-header-search-fallback"}>
+        Search groceries
+      </label>
+      <div className="flex min-h-12 items-center gap-1.5 rounded-full border border-border bg-surface pl-4 pr-0.5 shadow-sm md:min-h-11 md:gap-2 md:pr-1.5">
+        <svg
+          aria-hidden="true"
+          className="h-4 w-4 shrink-0 text-text-muted"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20.5 20.5-4.6-4.6" />
+        </svg>
+        <input
+          className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-text outline-none placeholder:text-text-muted md:text-sm"
+          id={mobile ? "mobile-header-search-fallback" : "desktop-header-search-fallback"}
+          name="q"
+          placeholder={placeholder}
+          type="search"
+        />
+        <button
+          aria-label="Search"
+          className="a1-primary-button h-11 w-11 shrink-0 cursor-pointer rounded-full !min-h-0 px-0 md:h-9 md:w-9"
+          type="submit"
+        >
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20.5 20.5-4.6-4.6" />
+          </svg>
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function HeaderSearchBox({
+  mobile = false,
+  placeholder,
+}: {
+  mobile?: boolean;
+  placeholder: string;
+}) {
   const searchParams = useSearchParams();
   const currentSearchQuery = searchParams.get("q") ?? "";
+
+  return (
+    <SearchBox
+      initialQuery={currentSearchQuery}
+      key={`${mobile ? "mobile" : "desktop"}-search-${currentSearchQuery}`}
+      placeholder={placeholder}
+      variant="header"
+    />
+  );
+}
+
+export function Header() {
+  const pathname = usePathname();
   const isCheckoutRoute = pathname?.startsWith("/checkout");
-  const isAuthRoute = pathname === "/login" || pathname === "/reset-password";
+  const isAuthRoute =
+    pathname === "/login"
+    || pathname === "/register"
+    || pathname === "/forgot-password"
+    || pathname === "/reset-password";
   const isCompactRoute = isCheckoutRoute || isAuthRoute;
   const hasMobileTabBar = shouldShowMobileTabBar(pathname ?? null);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface shadow-[0_8px_30px_rgba(18,60,46,0.07)] md:bg-surface/95 md:backdrop-blur-xl">
+    <header className="sticky top-0 z-[var(--z-layer-sticky)] border-b border-border bg-surface shadow-[0_8px_30px_rgba(18,60,46,0.07)] md:bg-surface/95 md:backdrop-blur-xl">
       <div className={`${isCompactRoute ? "hidden" : "hidden md:block"} bg-primary text-white`}>
         <div className="mx-auto flex min-h-8 max-w-7xl items-center justify-center gap-4 px-4 text-[11px] font-bold sm:justify-between sm:px-6 sm:text-xs lg:px-8">
           <p className="flex items-center gap-2">
@@ -112,7 +186,13 @@ export function Header() {
             <BrandLogo />
           </div>
           <div className={`${isCompactRoute ? "hidden" : "hidden md:block"} min-w-0 flex-1`}>
-            <SearchBox initialQuery={currentSearchQuery} key={`desktop-search-${currentSearchQuery}`} placeholder="Search rice, masala, noodles, tea and more" variant="header" />
+            <Suspense
+              fallback={
+                <HeaderSearchFallback placeholder="Search rice, masala, noodles, tea and more" />
+              }
+            >
+              <HeaderSearchBox placeholder="Search rice, masala, noodles, tea and more" />
+            </Suspense>
           </div>
           <nav aria-label="Customer shortcuts" className={`${isCompactRoute ? "hidden" : "ml-auto hidden shrink-0 items-center gap-1 xl:flex"}`}>
             <AccountAction href="/wishlist" icon="heart" label="Wishlist" />
@@ -131,14 +211,18 @@ export function Header() {
         </div>
 
         <div className={`${isCompactRoute ? "hidden" : "pb-2 md:hidden"}`}>
-          <SearchBox initialQuery={currentSearchQuery} key={`mobile-search-${currentSearchQuery}`} placeholder="Search groceries" variant="header" />
+          <Suspense
+            fallback={<HeaderSearchFallback mobile placeholder="Search groceries" />}
+          >
+            <HeaderSearchBox mobile placeholder="Search groceries" />
+          </Suspense>
         </div>
       </div>
 
       <nav aria-label="Shop departments" className={`${isCompactRoute ? "hidden" : "hidden border-t border-border/80 md:block"}`}>
         <div className="a1-no-scrollbar mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-6 py-1.5 lg:px-8">
           {aisleLinks.map((item) => {
-            const isActive = isActivePath(pathname, searchParams, item.href);
+            const isActive = isActivePath(pathname, item.href);
 
             return (
               <Link
@@ -150,6 +234,7 @@ export function Header() {
                 href={item.href}
                 key={item.href}
                 prefetch={false}
+                scroll
               >
                 {item.label}
               </Link>

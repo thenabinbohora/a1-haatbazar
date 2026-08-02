@@ -4,9 +4,9 @@ import { loadLocalEnv } from "./load-local-env";
 loadLocalEnv();
 
 async function main() {
-  const [{ prisma }, { ensureSupabaseAuthUser }] = await Promise.all([
+  const [{ prisma }, { ensureScriptAuthUser }] = await Promise.all([
     import("@/lib/prisma"),
-    import("@/lib/supabase-auth-server"),
+    import("./supabase-admin"),
   ]);
 
   const customers = await prisma.user.findMany({
@@ -15,8 +15,11 @@ async function main() {
       status: "ACTIVE",
     },
     select: {
+      id: true,
+      authMethod: true,
       email: true,
       name: true,
+      passwordHash: true,
       phone: true,
     },
   });
@@ -24,11 +27,20 @@ async function main() {
   let synced = 0;
 
   for (const customer of customers) {
-    await ensureSupabaseAuthUser({
+    const authUser = await ensureScriptAuthUser({
       email: customer.email,
       name: customer.name,
       password: randomBytes(32).toString("base64url"),
       phone: customer.phone,
+    });
+    await prisma.user.update({
+      data: {
+        authMethod:
+          customer.authMethod ??
+          (customer.passwordHash ? "PASSWORD" : "EMAIL_OTP"),
+        supabaseAuthUserId: authUser.id,
+      },
+      where: { id: customer.id },
     });
     synced += 1;
   }

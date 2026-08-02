@@ -6,6 +6,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
 import { createPortal } from "react-dom";
 import { formatCurrency } from "@/components/product/price";
+import { useDismissibleLayer } from "@/components/ui/overlay-provider";
+import { useResetOnNavigation } from "@/hooks/use-reset-on-navigation";
+import { navigateToSearch } from "@/lib/client-navigation";
 
 type Suggestion = {
   id: string;
@@ -77,7 +80,7 @@ function SearchSuggestionsPanel({
 
   return (
     <div
-      className="a1-menu-enter fixed z-[80] overflow-y-auto rounded-2xl border border-border bg-white p-2 shadow-[0_24px_60px_rgba(15,46,26,0.2)]"
+      className="a1-menu-enter fixed z-[var(--z-layer-popover)] overflow-y-auto rounded-2xl border border-border bg-white p-2 shadow-[0_24px_60px_rgba(15,46,26,0.2)]"
       id={listboxId}
       ref={panelRef}
       role={suggestions.length > 0 ? "listbox" : undefined}
@@ -186,6 +189,36 @@ export function SearchBox({
   const abortRef = useRef<AbortController | null>(null);
   const isHero = variant === "hero";
 
+  const dismiss = useDismissibleLayer({
+    contentRef: panelRef,
+    dismissOnResize: false,
+    dismissOnScroll: false,
+    onDismiss: () => {
+      setIsOpen(false);
+      setActiveIndex(-1);
+    },
+    open: isOpen,
+    restoreFocusOnDismiss: true,
+    triggerRef: containerRef,
+  });
+
+  const resetTransientSearch = useCallback(() => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setQuery(initialQuery);
+    setSuggestions([]);
+    setIsOpen(false);
+    setIsLoading(false);
+    setActiveIndex(-1);
+  }, [initialQuery]);
+
+  useResetOnNavigation(resetTransientSearch);
+
   const updatePanelPosition = useCallback(() => {
     const container = containerRef.current;
 
@@ -227,27 +260,6 @@ export function SearchBox({
       abortRef.current?.abort();
     };
   }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !containerRef.current?.contains(event.target) &&
-        !panelRef.current?.contains(event.target)
-      ) {
-        setIsOpen(false);
-        setActiveIndex(-1);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -324,15 +336,13 @@ export function SearchBox({
   }
 
   function goToProduct(suggestion: Suggestion) {
-    setIsOpen(false);
-    setActiveIndex(-1);
-    router.push(`/products/${suggestion.slug}`);
+    dismiss("navigation");
+    router.push(`/products/${suggestion.slug}`, { scroll: true });
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
-      setIsOpen(false);
-      setActiveIndex(-1);
+      dismiss("escape");
       return;
     }
 
@@ -362,11 +372,8 @@ export function SearchBox({
   }
 
   function searchAll(value = query.trim()) {
-    const trimmed = value.trim();
-
-    setIsOpen(false);
-    setActiveIndex(-1);
-    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+    dismiss("navigation");
+    navigateToSearch(value, router);
   }
 
   function selectQuickSearch(value: string) {
@@ -376,8 +383,8 @@ export function SearchBox({
 
   return (
     <form
-      action="/search"
-      className="relative z-30 min-w-0 focus-within:z-[65]"
+      action="/search#product-results"
+      className="relative z-30 min-w-0 focus-within:z-[var(--z-layer-popover)]"
       onSubmit={(event) => {
         event.preventDefault();
         searchAll();
@@ -455,30 +462,19 @@ export function SearchBox({
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
-            <>
-              <div
-                aria-hidden="true"
-                className="fixed inset-x-0 bottom-0 z-[70] cursor-default bg-primary/10 md:pointer-events-none md:bg-primary/[0.025]"
-                onPointerDown={() => {
-                  setIsOpen(false);
-                  setActiveIndex(-1);
-                }}
-                style={{ top: typeof panelStyle.top === "number" ? Math.max(0, panelStyle.top - 6) : 0 }}
-              />
-              <SearchSuggestionsPanel
-                activeIndex={activeIndex}
-                isLoading={isLoading}
-                listboxId={listboxId}
-                onSearchAll={() => searchAll()}
-                onSelectQuickSearch={selectQuickSearch}
-                onSelectSuggestion={goToProduct}
-                panelRef={panelRef}
-                panelStyle={panelStyle}
-                query={query}
-                setActiveIndex={setActiveIndex}
-                suggestions={suggestions}
-              />
-            </>,
+            <SearchSuggestionsPanel
+              activeIndex={activeIndex}
+              isLoading={isLoading}
+              listboxId={listboxId}
+              onSearchAll={() => searchAll()}
+              onSelectQuickSearch={selectQuickSearch}
+              onSelectSuggestion={goToProduct}
+              panelRef={panelRef}
+              panelStyle={panelStyle}
+              query={query}
+              setActiveIndex={setActiveIndex}
+              suggestions={suggestions}
+            />,
             document.body,
           )
         : null}

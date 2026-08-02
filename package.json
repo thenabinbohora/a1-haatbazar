@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "npm run test:unit && playwright test",
+    "test:unit": "tsx --test tests/unit/*.test.ts",
     "postinstall": "prisma generate",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -16,30 +18,32 @@
     "catalog:refresh-real": "tsx scripts/refresh-real-catalog.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "customer:create-test": "tsx scripts/create-test-customer.ts",
-    "auth:sync-supabase-users": "tsx scripts/sync-supabase-auth-users.ts"
+    "auth:sync-supabase-users": "tsx scripts/sync-supabase-auth-users.ts",
+    "account-deletion:retry": "tsx scripts/resume-account-deletion.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
     "@supabase/supabase-js": "^2.110.0",
-    "next": "^16.2.9",
+    "next": "^16.2.12",
     "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^26.0.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.9",
-    "prisma": "^7.8.0",
+    "eslint-config-next": "^16.2.12",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"

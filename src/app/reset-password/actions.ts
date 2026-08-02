@@ -55,7 +55,9 @@ export async function resetCustomerPasswordAction(formData: FormData) {
       status: "ACTIVE",
     },
     data: {
+      authMethod: "PASSWORD",
       passwordHash: await hashPassword(password),
+      supabaseAuthUserId: userData.user.id,
     },
   });
 

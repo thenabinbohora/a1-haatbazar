@@ -2,42 +2,56 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AdminIcon, type AdminIconName } from "@/components/admin/admin-icons";
 
 type AdminNavLinkProps = {
   href: string;
+  icon: AdminIconName;
   label: string;
-  shortLabel?: string;
+  collapsed?: boolean;
+  onNavigate?: () => void;
 };
 
-export function AdminNavLink({ href, label, shortLabel }: AdminNavLinkProps) {
+export function AdminNavLink({
+  collapsed = false,
+  href,
+  icon,
+  label,
+  onNavigate,
+}: AdminNavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <Link
       aria-current={isActive ? "page" : undefined}
+      aria-label={collapsed ? label : undefined}
       className={[
-        "flex min-h-10 items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+        "group/admin-nav relative flex min-h-11 items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta",
+        collapsed ? "justify-center" : "",
         isActive
-          ? "border-cta/40 bg-cta-soft text-primary shadow-sm"
-          : "border-transparent text-text-muted hover:border-border hover:bg-white/85 hover:text-primary",
+          ? "border-primary/12 bg-[#e9f1eb] text-primary"
+          : "border-transparent text-[#536159] hover:bg-[#f1f3ee] hover:text-primary",
       ].join(" ")}
       href={href}
+      onClick={onNavigate}
     >
-      <span className="flex min-w-0 items-center gap-3">
+      {isActive ? (
         <span
-          className={[
-            "grid h-7 w-7 shrink-0 place-items-center rounded-md border text-xs font-black",
-            isActive ? "border-primary/15 bg-white text-primary" : "border-border bg-surface-muted text-text-muted",
-          ].join(" ")}
           aria-hidden="true"
+          className="absolute inset-y-2 left-0 w-0.5 rounded-r-full bg-[#b98525]"
+        />
+      ) : null}
+      <AdminIcon className="h-5 w-5 shrink-0" name={icon} />
+      {collapsed ? null : <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {collapsed ? (
+        <span
+          className="pointer-events-none absolute left-[calc(100%+0.65rem)] top-1/2 z-[var(--z-layer-popover)] hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg group-hover/admin-nav:block group-focus-visible/admin-nav:block"
+          role="tooltip"
         >
-          {label.slice(0, 1)}
+          {label}
         </span>
-        <span className="hidden truncate lg:inline">{label}</span>
-        <span className="truncate lg:hidden">{shortLabel ?? label}</span>
-      </span>
-      {isActive ? <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" /> : null}
+      ) : null}
     </Link>
   );
 }

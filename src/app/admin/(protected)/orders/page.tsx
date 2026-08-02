@@ -3,7 +3,8 @@ import { AdminActionMessage } from "@/components/admin/admin-action-message";
 import { AdminEmptyState } from "@/components/admin/admin-states";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { formatCurrency } from "@/components/product/price";
-import { adminOrderStatusOptions, getNextOrderStatusOptions, orderStatusLabels } from "@/lib/admin/order-status";
+import { parseDashboardRange } from "@/lib/admin/dashboard-data";
+import { adminOrderFilterStatuses, getNextOrderStatusOptions, orderStatusLabels } from "@/lib/admin/order-status";
 import { prisma } from "@/lib/prisma";
 import { updateOrderStatusAction } from "./actions";
 
@@ -11,6 +12,9 @@ type OrdersPageProps = {
   searchParams?: Promise<{
     q?: string;
     status?: string;
+    payment?: string;
+    range?: string;
+    metric?: string;
     error?: string;
     success?: string;
   }>;
@@ -34,6 +38,21 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
   const params = await searchParams;
   const query = params?.q?.trim() ?? "";
   const status = params?.status ?? "";
+  const payment = params?.payment ?? "";
+  const eligibleSalesOnly = params?.metric === "eligible-sales";
+  const selectedRange = params?.range
+    ? parseDashboardRange(params.range)
+    : null;
+  const validatedStatus = adminOrderFilterStatuses.includes(
+    status as (typeof adminOrderFilterStatuses)[number],
+  )
+    ? (status as (typeof adminOrderFilterStatuses)[number])
+    : "";
+  const validatedPayment = paymentStatuses.includes(
+    payment as (typeof paymentStatuses)[number],
+  )
+    ? (payment as (typeof paymentStatuses)[number])
+    : "";
 
   const orders = await prisma.order.findMany({
     where: {
@@ -45,8 +64,20 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
             ],
           }
         : {}),
-      ...(status && adminOrderStatusOptions.includes(status as (typeof adminOrderStatusOptions)[number])
-        ? { status: status as (typeof adminOrderStatusOptions)[number] }
+      ...(!eligibleSalesOnly && validatedStatus
+        ? { status: validatedStatus }
+        : {}),
+      ...(eligibleSalesOnly
+        ? {
+            paymentStatus: "PAID" as const,
+            status: { notIn: ["CANCELLED", "REFUNDED"] as const },
+            currency: "AUD",
+          }
+        : validatedPayment
+          ? { paymentStatus: validatedPayment }
+          : {}),
+      ...(selectedRange
+        ? { createdAt: { gte: selectedRange.start, lt: selectedRange.end } }
         : {}),
     },
     include: {
@@ -68,20 +99,31 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
 
       <AdminActionMessage error={params?.error} messages={messages} success={params?.success} />
 
-      <form className="mb-5 grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm lg:grid-cols-[1fr_240px_auto]">
+      <form className="mb-5 grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm lg:grid-cols-[1fr_190px_190px_auto]">
         <label className="block">
           <span className="text-sm font-semibold text-text">Search</span>
           <input className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta" defaultValue={query} name="q" placeholder="Order number or customer email" type="search" />
         </label>
         <label className="block">
           <span className="text-sm font-semibold text-text">Status</span>
-          <select className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta" defaultValue={status} name="status">
+          <select className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta" defaultValue={validatedStatus} name="status">
             <option value="">Any status</option>
-            {adminOrderStatusOptions.map((item) => (
+            {adminOrderFilterStatuses.map((item) => (
               <option key={item} value={item}>{orderStatusLabels[item]}</option>
             ))}
           </select>
         </label>
+        <label className="block">
+          <span className="text-sm font-semibold text-text">Payment</span>
+          <select className="mt-2 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text focus:border-cta" defaultValue={validatedPayment} name="payment">
+            <option value="">Any payment</option>
+            {paymentStatuses.map((item) => (
+              <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+            ))}
+          </select>
+        </label>
+        {selectedRange ? <input name="range" type="hidden" value={selectedRange.key} /> : null}
+        {eligibleSalesOnly ? <input name="metric" type="hidden" value="eligible-sales" /> : null}
         <button className="mt-7 min-h-11 cursor-pointer rounded-md bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta" type="submit">
           Filter
         </button>
@@ -111,7 +153,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                     <p className="mt-1 text-xs text-text-muted">{order.createdAt.toLocaleDateString()}</p>
                   </td>
                   <td className="px-4 py-4">
-                    <p className="text-text">{order.user.name ?? "Customer"}</p>
+                    <p className="text-text">{order.user?.name ?? "Former customer"}</p>
                     <p className="mt-1 text-xs text-text-muted">{order.customerEmail}</p>
                     {order.address ? (
                       <p className="mt-1 text-xs text-text-muted">

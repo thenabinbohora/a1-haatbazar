@@ -1,13 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import type { MouseEvent } from "react";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { BUSINESS_CONFIG } from "@/config/business";
+import { useResetOnNavigation } from "@/hooks/use-reset-on-navigation";
+import {
+  isUnmodifiedPrimaryClick,
+  scrollDocumentToTop,
+} from "@/lib/client-navigation";
 
 const shoppingLinks = [
   { href: "/products", label: "Shop all" },
-  { href: "/products?sale=on", label: "Weekly offers" },
+  { href: "/offers", label: "Weekly offers" },
+  { href: "/featured", label: "Featured products" },
   { href: "/category/vegetables", label: "Fresh vegetables" },
   { href: "/categories", label: "Categories" },
-  { href: "/products?sort=popular", label: "Best sellers" },
+  { href: "/best-sellers", label: "Best sellers" },
 ];
 
 const customerLinks = [
@@ -64,11 +74,14 @@ function ArrowIcon() {
   );
 }
 
-function DisclosureIcon() {
+function DisclosureIcon({ isOpen }: { isOpen: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-5 w-5 transition-transform duration-200 group-open:rotate-180 motion-reduce:transform-none motion-reduce:transition-none"
+      className={[
+        "h-5 w-5 transition-transform duration-200 motion-reduce:transform-none motion-reduce:transition-none",
+        isOpen ? "rotate-180" : "",
+      ].join(" ")}
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"
@@ -81,41 +94,94 @@ function DisclosureIcon() {
   );
 }
 
-function FooterNavigationLink({ link, mobile = false }: { link: FooterLink; mobile?: boolean }) {
+function FooterNavigationLink({
+  link,
+  mobile = false,
+  onNavigate,
+}: {
+  link: FooterLink;
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
   const className = mobile
     ? "flex min-h-11 w-full items-center rounded-lg px-2 py-2 leading-5 transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta motion-reduce:transition-none"
     : "inline-flex min-h-11 items-center rounded-md py-2 leading-5 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta motion-reduce:transition-none";
 
   if (link.href.startsWith("/")) {
+    function handleSameDestination(event: MouseEvent<HTMLAnchorElement>) {
+      const targetUrl = new URL(link.href, window.location.origin);
+      const isCurrentLocation =
+        targetUrl.pathname === window.location.pathname &&
+        targetUrl.search === window.location.search &&
+        targetUrl.hash === window.location.hash;
+
+      if (isCurrentLocation && isUnmodifiedPrimaryClick(event)) {
+        event.preventDefault();
+        onNavigate?.();
+        scrollDocumentToTop();
+        document.getElementById("main-content")?.focus({ preventScroll: true });
+      }
+    }
+
     return (
-      <Link className={className} href={link.href} prefetch={false}>
+      <Link
+        className={className}
+        href={link.href}
+        onClick={handleSameDestination}
+        prefetch={false}
+        scroll
+      >
         {link.label}
       </Link>
     );
   }
 
   return (
-    <a className={className} href={link.href}>
+    <a className={className} href={link.href} onClick={onNavigate}>
       {link.label}
     </a>
   );
 }
 
-function MobileLinkDisclosure({ label, links }: { label: string; links: FooterLink[] }) {
+function MobileLinkDisclosure({
+  id,
+  isOpen,
+  label,
+  links,
+  onNavigate,
+  onToggle,
+}: {
+  id: string;
+  isOpen: boolean;
+  label: string;
+  links: FooterLink[];
+  onNavigate: () => void;
+  onToggle: () => void;
+}) {
+  const panelId = `footer-${id}-panel`;
+
   return (
-    <details className="group border-b border-white/10 last:border-b-0">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2 text-sm font-extrabold text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta [&::-webkit-details-marker]:hidden">
-        {label}
-        <DisclosureIcon />
-      </summary>
-      <ul className="pb-2 text-sm text-emerald-50/80">
+    <section className="border-b border-white/10 last:border-b-0">
+      <h2>
+        <button
+          aria-controls={panelId}
+          aria-expanded={isOpen}
+          className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 py-2 text-left text-sm font-extrabold text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cta"
+          onClick={onToggle}
+          type="button"
+        >
+          {label}
+          <DisclosureIcon isOpen={isOpen} />
+        </button>
+      </h2>
+      <ul className="pb-2 text-sm text-emerald-50/80" hidden={!isOpen} id={panelId}>
         {links.map((link) => (
           <li key={link.href}>
-            <FooterNavigationLink link={link} mobile />
+            <FooterNavigationLink link={link} mobile onNavigate={onNavigate} />
           </li>
         ))}
       </ul>
-    </details>
+    </section>
   );
 }
 
@@ -159,9 +225,20 @@ type FooterProps = {
 };
 
 export function Footer({ hasMobileTabBar = false }: FooterProps) {
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const safeAreaClass = hasMobileTabBar
     ? "xl:pb-[env(safe-area-inset-bottom)]"
     : "pb-[env(safe-area-inset-bottom)]";
+
+  useResetOnNavigation(() => setOpenSection(null));
+
+  function closeMobileNavigation() {
+    setOpenSection(null);
+  }
+
+  function toggleMobileSection(section: string) {
+    setOpenSection((current) => (current === section ? null : section));
+  }
 
   return (
     <footer className="mt-auto">
@@ -198,9 +275,30 @@ export function Footer({ hasMobileTabBar = false }: FooterProps) {
           <DesktopLinkColumn label="Legal" links={legalLinks} />
 
           <div className="mt-7 rounded-xl border border-white/10 px-3 md:hidden">
-            <MobileLinkDisclosure label="Shop" links={shoppingLinks} />
-            <MobileLinkDisclosure label="Your account" links={customerLinks} />
-            <MobileLinkDisclosure label="Help & legal" links={mobileHelpAndLegalLinks} />
+            <MobileLinkDisclosure
+              id="shop"
+              isOpen={openSection === "shop"}
+              label="Shop"
+              links={shoppingLinks}
+              onNavigate={closeMobileNavigation}
+              onToggle={() => toggleMobileSection("shop")}
+            />
+            <MobileLinkDisclosure
+              id="account"
+              isOpen={openSection === "account"}
+              label="Your account"
+              links={customerLinks}
+              onNavigate={closeMobileNavigation}
+              onToggle={() => toggleMobileSection("account")}
+            />
+            <MobileLinkDisclosure
+              id="help-legal"
+              isOpen={openSection === "help-legal"}
+              label="Help & legal"
+              links={mobileHelpAndLegalLinks}
+              onNavigate={closeMobileNavigation}
+              onToggle={() => toggleMobileSection("help-legal")}
+            />
           </div>
 
           <div className="mt-7 md:hidden">

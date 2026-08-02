@@ -117,7 +117,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
     notFound();
   }
 
-  const relatedProducts = (await getPublicProducts({ sort: "popular" }, { categorySlug: product.category.slug, take: 9 }))
+  const relatedProducts = (await getPublicProducts({ sort: "best-selling" }, { categorySlug: product.category.slug, take: 9 }))
     .filter((item) => item.slug !== product.slug)
     .slice(0, 4);
 
@@ -140,13 +140,19 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
               {product.category.name}
             </Link>
             <span>/</span>
-            <span className="truncate font-semibold text-text">{product.name}</span>
+            <span aria-current="page" className="truncate font-semibold text-text">
+              {product.name}
+            </span>
           </nav>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
-        <ProductDetailView initialVariant={selectedVariant} product={product} />
+        <ProductDetailView
+          initialVariant={selectedVariant}
+          key={`${product.id}:${selectedVariant ?? "default"}`}
+          product={product}
+        />
       </section>
 
       <section className="border-t border-border bg-surface">

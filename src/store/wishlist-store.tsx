@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { FloatingFeedbackToast } from "@/components/ui/floating-feedback-toast";
+import { useResetOnNavigation } from "@/hooks/use-reset-on-navigation";
 
 type WishlistContextValue = {
   isAuthenticated: boolean;
@@ -18,6 +19,8 @@ export function WishlistProvider({ children, isAuthenticated }: { children: Reac
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [hasLoadedSavedIds, setHasLoadedSavedIds] = useState(false);
   const [showAuthNotice, setShowAuthNotice] = useState(false);
+
+  useResetOnNavigation(() => setShowAuthNotice(false));
 
   useEffect(() => {
     if (!isAuthenticated) {

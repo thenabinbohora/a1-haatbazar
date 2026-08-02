@@ -2,7 +2,8 @@ import { ProductGridSkeleton } from "@/components/product/product-grid";
 
 export default function ProductDetailLoading() {
   return (
-    <div className="bg-background">
+    <div aria-busy="true" className="bg-background" role="status">
+      <span className="sr-only">Loading product details…</span>
       <section className="border-b border-border bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="skeleton-shimmer h-5 w-72 max-w-full rounded" />

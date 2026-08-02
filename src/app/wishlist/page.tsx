@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AccountNav } from "@/components/account/account-nav";
+import { AccountActionMessage } from "@/components/account/account-action-message";
+import { AccountIcon } from "@/components/account/account-icons";
+import { CustomerAccountShell } from "@/components/account/customer-account-shell";
 import { WishlistItems, type WishlistItemView } from "@/components/account/wishlist-items";
 
 export const metadata: Metadata = {
@@ -8,7 +10,6 @@ export const metadata: Metadata = {
   description: "Your saved A1 Haat Bazar grocery products.",
   robots: { index: false },
 };
-import { AdminActionMessage } from "@/components/admin/admin-action-message";
 import { customerImageUrl } from "@/lib/customer-images";
 import { customerImageAlt, customerProductName } from "@/lib/display";
 import { requireCustomer } from "@/lib/auth";
@@ -70,33 +71,56 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
   });
 
   return (
-    <div className="min-h-dvh bg-background">
-      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-        <header className="mb-5 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-7">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-fresh">Your account</p>
-          <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-text sm:text-4xl">Wishlist</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">Keep favourite groceries ready for your next shop.</p>
-        </header>
-        <AccountNav />
-        <AdminActionMessage error={params?.error} success={params?.success} />
+    <CustomerAccountShell
+      description="Keep favourite groceries ready for your next shop."
+      title="Wishlist"
+      user={user}
+    >
+        <AccountActionMessage
+          error={params?.error}
+          messages={{
+            successes: { removed: "The item has been removed from your wishlist." },
+          }}
+          success={params?.success}
+        />
 
         {wishlistItems.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-surface p-7 text-center shadow-sm sm:p-10">
-            <h2 className="text-2xl font-black text-text">Your wishlist is empty</h2>
+          <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center shadow-[0_1px_3px_rgba(18,60,46,0.05)] sm:p-10">
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-fresh-soft text-primary">
+              <AccountIcon className="h-6 w-6" name="heart" />
+            </span>
+            <h2 className="mt-4 text-xl font-black text-text">Nothing saved yet</h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted">
-              Save your favourite groceries and find them quickly next time.
+              Tap the heart on products to save them here for your next shop.
             </p>
             <Link
-              className="a1-primary-button mt-5 min-h-12 px-5 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:text-sm"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
               href="/products"
             >
+              <AccountIcon className="h-4.5 w-4.5" name="bag" />
               Browse groceries
             </Link>
           </div>
         ) : (
-          <WishlistItems items={wishlistItems} />
+          <>
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black text-text">Saved groceries</h2>
+                <p className="mt-1 text-sm text-text-muted">
+                  {wishlistItems.length} {wishlistItems.length === 1 ? "item" : "items"} saved
+                </p>
+              </div>
+              <Link
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-extrabold text-text transition-colors hover:border-primary/25 hover:bg-surface-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+                href="/products"
+              >
+                <AccountIcon className="h-4.5 w-4.5" name="bag" />
+                Keep shopping
+              </Link>
+            </div>
+            <WishlistItems items={wishlistItems} />
+          </>
         )}
-      </section>
-    </div>
+    </CustomerAccountShell>
   );
 }

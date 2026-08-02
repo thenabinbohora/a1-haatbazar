@@ -76,7 +76,7 @@ export async function POST(request: Request) {
           lineTotal: 0,
           isAvailable: false,
           wasAdjusted: true,
-          reason: "This cart item is no longer available.",
+          reason: "The selected pack is no longer available. Remove this item before continuing to checkout.",
         product: {
           name: "Unavailable item",
             slug: "",
@@ -117,11 +117,11 @@ export async function POST(request: Request) {
         isAvailable,
         wasAdjusted: quantity !== item.quantity,
         reason: !isActive
-          ? "This item is no longer available."
+          ? "This product is no longer available. Remove it before continuing to checkout."
           : stock <= 0
-            ? "This item is out of stock."
+            ? "This item is currently out of stock. Remove it before continuing to checkout."
             : quantity !== item.quantity
-              ? `Only ${stock} available.`
+              ? `Only ${stock} ${stock === 1 ? "is" : "are"} currently available. Quantity adjusted to ${stock}.`
               : null,
         product: {
           name: customerProductName(variant.product.name),

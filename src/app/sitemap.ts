@@ -22,6 +22,9 @@ const legalRoutes: StaticRoute[] = Object.values(LEGAL_CONFIG.documents).map((do
 const staticRoutes: StaticRoute[] = [
   { path: "/", priority: 1, changeFrequency: "daily" },
   { path: "/products", priority: 0.9, changeFrequency: "daily" },
+  { path: "/offers", priority: 0.85, changeFrequency: "daily" },
+  { path: "/featured", priority: 0.8, changeFrequency: "daily" },
+  { path: "/best-sellers", priority: 0.8, changeFrequency: "daily" },
   { path: "/categories", priority: 0.8, changeFrequency: "weekly" },
   ...legalRoutes,
 ];

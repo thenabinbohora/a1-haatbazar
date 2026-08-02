@@ -8,6 +8,7 @@ type ProductGridProps = {
   emptyDescription?: string;
   emptyActionHref?: string;
   emptyActionLabel?: string;
+  emptyActionOnClick?: () => void;
   priorityImageCount?: number;
   variant?: "standard" | "related" | "rail" | "compactGrid" | "featuredGrid" | "bestSellersGrid";
 };
@@ -18,6 +19,7 @@ export function ProductGrid({
   emptyDescription = "Try a different search, category, or filter combination.",
   emptyActionHref,
   emptyActionLabel,
+  emptyActionOnClick,
   priorityImageCount = 2,
   variant = "standard",
 }: ProductGridProps) {
@@ -31,7 +33,15 @@ export function ProductGrid({
         </div>
         <p className="mt-5 text-lg font-extrabold text-text sm:text-xl">{emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted">{emptyDescription}</p>
-        {emptyActionHref && emptyActionLabel ? (
+        {emptyActionOnClick && emptyActionLabel ? (
+          <button
+            className="a1-primary-button mt-5 inline-flex cursor-pointer !rounded-xl px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
+            onClick={emptyActionOnClick}
+            type="button"
+          >
+            {emptyActionLabel}
+          </button>
+        ) : emptyActionHref && emptyActionLabel ? (
           <Link
             className="a1-primary-button mt-5 inline-flex !rounded-xl px-5 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={emptyActionHref}
@@ -58,8 +68,8 @@ export function ProductGrid({
             : variant === "featuredGrid" || variant === "bestSellersGrid"
               ? "grid w-full max-w-full min-w-0 auto-rows-fr grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4"
             : variant === "compactGrid"
-              ? "grid auto-rows-fr grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:auto-rows-auto md:grid-cols-3 md:gap-y-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-              : "grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+              ? "grid w-full max-w-full min-w-0 auto-rows-fr grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:auto-rows-auto md:grid-cols-3 md:gap-y-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+              : "grid w-full max-w-full min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
       }
     >
       {products.map((product, index) => (
@@ -86,7 +96,7 @@ export function ProductGridSkeleton() {
     <div
       aria-label="Loading products"
       aria-live="polite"
-      className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      className="grid w-full max-w-full min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
     >
       {Array.from({ length: 8 }).map((_, index) => (
         <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm" key={index}>

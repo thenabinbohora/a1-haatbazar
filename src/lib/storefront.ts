@@ -4,19 +4,16 @@ import { HOME_FEATURED_CATEGORY_SLUGS } from "@/config/categories";
 import { prisma } from "@/lib/prisma";
 import { customerImageUrl } from "@/lib/customer-images";
 import { customerImageAlt, customerProductName } from "@/lib/display";
+import {
+  filterAndSortStorefrontProducts,
+  normalizeStorefrontSearchParams,
+  type ProductCollection,
+  type StorefrontSearchParams,
+} from "@/lib/product-filter-state";
 import { sanitizeSlug } from "@/lib/slug";
 
-export type StorefrontSearchParams = {
-  q?: string;
-  category?: string;
-  brand?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  inStock?: string;
-  sale?: string;
-  freshVegetables?: string;
-  sort?: string;
-};
+export { normalizeStorefrontSearchParams };
+export type { ProductCollection, StorefrontSearchParams };
 
 type StorefrontProductRecord = Prisma.ProductGetPayload<{
   include: {
@@ -58,12 +55,18 @@ export type StorefrontProductCard = {
   isFeatured: boolean;
   isBestSeller: boolean;
   isWeeklyOffer: boolean;
+  searchTerms: string[];
   createdAt: Date;
 };
 
 export type StorefrontFilters = {
   categories: Array<{ id: string; name: string; slug: string; productCount: number }>;
   brands: Array<{ id: string; name: string; slug: string; country?: string | null }>;
+  collectionCounts: {
+    bestSellers: number;
+    featured: number;
+    onSale: number;
+  };
 };
 
 export type StorefrontCategory = {
@@ -124,26 +127,6 @@ const productInclude = {
   },
 } satisfies Prisma.ProductInclude;
 
-function one(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-export function normalizeStorefrontSearchParams(
-  searchParams?: Record<string, string | string[] | undefined>,
-): StorefrontSearchParams {
-  return {
-    q: one(searchParams?.q)?.trim() || one(searchParams?.search)?.trim() || undefined,
-    category: one(searchParams?.category)?.trim() || undefined,
-    brand: one(searchParams?.brand)?.trim() || undefined,
-    minPrice: one(searchParams?.minPrice)?.trim() || undefined,
-    maxPrice: one(searchParams?.maxPrice)?.trim() || undefined,
-    inStock: one(searchParams?.inStock) === "on" || one(searchParams?.availability) === "in-stock" ? "on" : undefined,
-    sale: one(searchParams?.sale) === "on" || one(searchParams?.sale) === "true" ? "on" : undefined,
-    freshVegetables: one(searchParams?.freshVegetables) === "on" ? "on" : undefined,
-    sort: one(searchParams?.sort)?.trim() || "newest",
-  };
-}
-
 function numberFromDecimal(value: unknown) {
   if (value === null || value === undefined) {
     return 0;
@@ -154,15 +137,6 @@ function numberFromDecimal(value: unknown) {
   }
 
   return Number(value.toString());
-}
-
-function validMoney(value?: string) {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function effectiveVariantPrice(variant: StorefrontProductRecord["variants"][number]) {
@@ -238,34 +212,15 @@ function toProductCard(product: StorefrontProductRecord): StorefrontProductCard 
     isFeatured: product.isFeatured,
     isBestSeller: product.isBestSeller,
     isWeeklyOffer: product.isWeeklyOffer,
+    searchTerms: [
+      ...product.tags,
+      ...product.regionTags,
+      ...product.dietaryTags,
+    ].filter(Boolean),
     createdAt: product.createdAt,
   };
 
   return card;
-}
-
-function sortProducts(products: StorefrontProductCard[], sort = "newest") {
-  return [...products].sort((first, second) => {
-    if (sort === "price-low") {
-      return first.startingPrice - second.startingPrice;
-    }
-
-    if (sort === "price-high") {
-      return second.startingPrice - first.startingPrice;
-    }
-
-    if (sort === "popular") {
-      const firstScore = Number(first.isBestSeller) * 4 + Number(first.isFeatured) * 2 + Number(first.isWeeklyOffer);
-      const secondScore = Number(second.isBestSeller) * 4 + Number(second.isFeatured) * 2 + Number(second.isWeeklyOffer);
-      return secondScore - firstScore || second.createdAt.getTime() - first.createdAt.getTime();
-    }
-
-    if (sort === "discount" || sort === "offers") {
-      return (second.discountPercent ?? 0) - (first.discountPercent ?? 0);
-    }
-
-    return second.createdAt.getTime() - first.createdAt.getTime();
-  });
 }
 
 const publicCategoryProductWhere = {
@@ -313,13 +268,57 @@ export async function getHomeFeaturedCategories(): Promise<StorefrontCategory[]>
   });
 }
 
-export async function getStorefrontFilters(): Promise<StorefrontFilters> {
-  const [categories, brands] = await Promise.all([
+type StorefrontFilterScope = {
+  categorySlug?: string;
+  collection?: ProductCollection;
+};
+
+function collectionWhere(collection?: ProductCollection): Prisma.ProductWhereInput {
+  if (collection === "featured") {
+    return { isFeatured: true };
+  }
+
+  if (collection === "best-sellers") {
+    return { isBestSeller: true };
+  }
+
+  if (collection === "offers") {
+    return { isWeeklyOffer: true };
+  }
+
+  return {};
+}
+
+function scopedPublicProductWhere({
+  categorySlug,
+  collection,
+}: StorefrontFilterScope = {}): Prisma.ProductWhereInput {
+  return {
+    status: "ACTIVE",
+    variants: { some: { status: "ACTIVE" } },
+    ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+    ...collectionWhere(collection),
+  };
+}
+
+export async function getStorefrontFilters(
+  scope: StorefrontFilterScope = {},
+): Promise<StorefrontFilters> {
+  const scopedWhere = scopedPublicProductWhere(scope);
+  const [categories, brands, featured, bestSellers, onSale] = await Promise.all([
     getStorefrontCategories(),
     prisma.brand.findMany({
-      where: { products: { some: { status: "ACTIVE" } } },
+      where: { products: { some: scopedWhere } },
       orderBy: { name: "asc" },
       select: { id: true, name: true, slug: true, country: true },
+    }),
+    prisma.product.count({ where: { ...scopedWhere, isFeatured: true } }),
+    prisma.product.count({ where: { ...scopedWhere, isBestSeller: true } }),
+    prisma.product.count({
+      where: {
+        ...scopedWhere,
+        variants: { some: { salePrice: { not: null }, status: "ACTIVE" } },
+      },
     }),
   ]);
 
@@ -333,60 +332,57 @@ export async function getStorefrontFilters(): Promise<StorefrontFilters> {
         productCount: category.productCount,
       })),
     brands,
+    collectionCounts: {
+      bestSellers,
+      featured,
+      onSale,
+    },
   };
 }
 
 export async function getPublicProducts(
   params: StorefrontSearchParams = {},
-  options: { categorySlug?: string; take?: number; featured?: boolean; bestSeller?: boolean; weeklyOffer?: boolean } = {},
+  options: {
+    categorySlug?: string;
+    take?: number;
+    featured?: boolean;
+    bestSeller?: boolean;
+    weeklyOffer?: boolean;
+    collection?: ProductCollection;
+  } = {},
 ) {
-  const minPrice = validMoney(params.minPrice);
-  const maxPrice = validMoney(params.maxPrice);
-  const categorySlug = options.categorySlug ?? (params.freshVegetables ? "vegetables" : params.category);
+  const categorySlug = options.categorySlug;
+  const featured = options.featured || options.collection === "featured";
+  const bestSeller = options.bestSeller || options.collection === "best-sellers";
+  const weeklyOffer = options.weeklyOffer || options.collection === "offers";
   const where: Prisma.ProductWhereInput = {
     status: "ACTIVE",
-    ...(options.featured ? { isFeatured: true } : {}),
-    ...(options.bestSeller ? { isBestSeller: true } : {}),
-    ...(options.weeklyOffer ? { isWeeklyOffer: true } : {}),
-    ...(params.q
-      ? {
-          OR: [
-            { name: { contains: params.q, mode: "insensitive" } },
-            { description: { contains: params.q, mode: "insensitive" } },
-            { tags: { has: params.q } },
-          ],
-        }
-      : {}),
+    ...(featured ? { isFeatured: true } : {}),
+    ...(bestSeller ? { isBestSeller: true } : {}),
+    ...(weeklyOffer ? { isWeeklyOffer: true } : {}),
     ...(categorySlug ? { category: { slug: categorySlug } } : {}),
-    ...(params.brand ? { brand: { slug: params.brand } } : {}),
-    variants: {
-      some: {
-        status: "ACTIVE",
-        ...(params.inStock ? { stock: { gt: 0 } } : {}),
-        ...(params.sale ? { salePrice: { not: null } } : {}),
-        ...(minPrice !== undefined || maxPrice !== undefined
-          ? {
-              price: {
-                ...(minPrice !== undefined ? { gte: minPrice } : {}),
-                ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-              },
-            }
-          : {}),
-      },
-    },
+    variants: { some: { status: "ACTIVE" } },
   };
 
   const products = await prisma.product.findMany({
     where,
     include: productInclude,
     orderBy: { createdAt: "desc" },
-    take: options.take ?? 96,
   });
 
-  const productCards = products.map(toProductCard).filter((product): product is StorefrontProductCard => Boolean(product));
-  const saleFilteredProducts = params.sale ? productCards.filter((product) => product.isOnSale) : productCards;
+  const productCards = products
+    .map(toProductCard)
+    .filter(
+      (product): product is StorefrontProductCard => Boolean(product),
+    );
+  const filteredProducts = filterAndSortStorefrontProducts(
+    productCards,
+    params,
+  );
 
-  return sortProducts(saleFilteredProducts, params.sort);
+  return options.take
+    ? filteredProducts.slice(0, options.take)
+    : filteredProducts;
 }
 
 export async function getFeaturedCategories(take = 8) {

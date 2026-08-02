@@ -20,7 +20,6 @@ const VIEWPORT_PADDING = 14;
 const ANCHOR_GAP = 8;
 const TOAST_MAX_WIDTH = 220;
 const FALLBACK_HEIGHT = 76;
-const MOBILE_BOTTOM_GUARD = 88;
 
 function InfoIcon({ tone }: { tone: "success" | "info" | "error" }) {
   return (
@@ -90,7 +89,24 @@ export function FloatingFeedbackToast({
     }
 
     function getSafeBottom() {
-      return window.innerWidth < 1280 ? MOBILE_BOTTOM_GUARD : VIEWPORT_PADDING;
+      const bottomNavigation = document.querySelector<HTMLElement>(
+        'nav[aria-label="Bottom navigation"]',
+      );
+
+      if (!bottomNavigation || getComputedStyle(bottomNavigation).display === "none") {
+        return VIEWPORT_PADDING;
+      }
+
+      const navigationRect = bottomNavigation.getBoundingClientRect();
+
+      if (navigationRect.height === 0 || navigationRect.bottom <= 0) {
+        return VIEWPORT_PADDING;
+      }
+
+      return Math.max(
+        VIEWPORT_PADDING,
+        window.innerHeight - navigationRect.top + ANCHOR_GAP,
+      );
     }
 
     function getFallbackPosition(width: number): CSSProperties {
@@ -184,9 +200,9 @@ export function FloatingFeedbackToast({
   return createPortal(
     <div
       className={[
-        "pointer-events-auto fixed z-[90] rounded-xl border bg-[#fffef8] px-3 py-2.5 text-sm shadow-[0_18px_44px_rgba(15,46,26,0.18)] transition-[opacity,transform] duration-200 motion-reduce:transition-none",
+        "fixed z-[var(--z-layer-alert)] rounded-xl border bg-[#fffef8] px-3 py-2.5 text-sm shadow-[0_18px_44px_rgba(15,46,26,0.18)] transition-[opacity,transform] duration-200 motion-reduce:transition-none",
         tone === "success" ? "border-fresh/30 text-primary" : "border-cta/35 text-primary",
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+        isVisible ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0",
       ].join(" ")}
       ref={toastRef}
       role="status"
@@ -206,6 +222,7 @@ export function FloatingFeedbackToast({
           <Link
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-primary px-2.5 py-1.5 text-xs font-extrabold text-white transition-colors hover:bg-primary-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta"
             href={actionHref}
+            onClick={onClose}
           >
             {actionLabel}
           </Link>
